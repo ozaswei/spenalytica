@@ -40,6 +40,7 @@
     text-align: center;
     cursor: pointer;
     padding: 0.8rem 1rem;
+    background: transpaten;
     transition: background 0.3s, color 0.3s;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.8);
@@ -107,7 +108,7 @@
                 <form class="form-group">
                     <input type="text" placeholder="Expense Name" class="form-control" required>
                     <select name="" id="">
-                        <option disabled selected >-- Category --</option>
+                        <option disabled selected>-- Category --</option>
                         <option value=""></option>
                     </select>
                     <input type="text" placeholder="Expense Name" class="form-control" required>
@@ -123,10 +124,18 @@
                 </form>
             </div>
             <div id="category" class="tab-content">
-                <form>
-                    <input type="text" placeholder="Category Name*" required>
-                    <input type="number" placeholder="Amount" required>
-                    <button type="submit" class="modal-button">Save Income</button>
+                <h3>Add Category</h3>
+                <form class="form-group" action="{{route('addCategory')}}" method="POST">
+                    @csrf
+                    <div class="input-group mb-2">
+                        <input type="text" placeholder="Category Name*" name="categoryName" class="form-control" value="{{old('categoryName')}}"
+                            required>
+                    </div>
+                    <div class="input-group mb-2">
+                        <textarea name="description" id="" cols="30" rows="10" class="form-control"
+                            placeholder="Category Description">{{old('description')}}</textarea>
+                    </div>
+                    <button type="submit" class="modal-button">Add Category</button>
                 </form>
             </div>
         </div>
