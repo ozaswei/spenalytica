@@ -40,7 +40,6 @@
     text-align: center;
     cursor: pointer;
     padding: 0.8rem 1rem;
-    background: transpaten;
     transition: background 0.3s, color 0.3s;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.8);

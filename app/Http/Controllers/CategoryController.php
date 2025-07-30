@@ -19,7 +19,7 @@ class CategoryController extends Controller
             'description' => $request->description,
         ])) {
             return redirect()->back()->with('success', 'Category added successfully.');
-        }else{
+        } else {
             return redirect()->back()->with('failed', 'Category failed to add.');
         }
     }
