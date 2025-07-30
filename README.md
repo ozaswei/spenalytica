@@ -1,61 +1,103 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
+<h1 align="center">📊 Spenalytica</h1>
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <em>Analyze, visualize, and control your spending – beautifully, securely, and simply.</em><br>
+  <strong>Built with Laravel, HTML, CSS, JavaScript</strong>
 </p>
 
-## About Laravel
+<p align="center">
+  <img src="public/images/logo.png" alt="Spenalytica Logo" width="120"/>
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<h2>✨ What is Spenalytica?</h2>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+<p>
+  <strong>Spenalytica</strong> is an elegant and responsive web application that helps you track your income and expenses,
+  analyze your financial health, and visualize where your money goes.
+</p>
 
-## Learning Laravel
+<ul>
+  <li>💡 Identify unnecessary spendings and get recommendations to cut them down</li>
+  <li>📊 Interactive tabs: Overview, Add Expense, Add Income</li>
+  <li>🔒 Secure authentication (Sign In, Register, Forget Password)</li>
+  <li>📱 Fully responsive design with smooth animations</li>
+</ul>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+<h2>🚀 Features</h2>
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<ul>
+  <li>Modern dashboard with clean navbar and user dropdown</li>
+  <li>Large tabbed interface to add & view financial data</li>
+  <li>Animated modals for login/register</li>
+  <li>Gradient background with elegant blur effects</li>
+  <li>Built using Laravel, HTML, CSS, JavaScript</li>
+</ul>
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+<h2>🛠 Tech Stack</h2>
 
-### Premium Partners
+<ul>
+  <li>⚙️ <strong>Laravel</strong> – PHP backend framework</li>
+  <li>🎨 HTML, CSS – Responsive UI with custom styles</li>
+  <li>🧩 JavaScript – Dynamic tab switching & dropdown</li>
+  <li>🗄 XAMPP / MySQL – Local development & database</li>
+</ul>
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+<h2>📦 Installation & Running</h2>
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+<ol>
+  <li>Clone the repository:
+    <pre><code>git clone https://github.com/ozaswei/spenalytica.git</code></pre>
+  </li>
+  <li>Install dependencies:
+    <pre><code>composer install
+npm install</code></pre>
+  </li>
+  <li>Copy the example env:
+    <pre><code>cp .env.example .env</code></pre>
+  </li>
+  <li>Generate key & migrate:
+    <pre><code>php artisan key:generate
+php artisan migrate</code></pre>
+  </li>
+  <li>Run the application:
+    <pre><code>php artisan serve</code></pre>
+  </li>
+</ol>
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+<h2>🎉 Screenshots</h2>
 
-## Security Vulnerabilities
+<p align="center">
+  <img src="public/images/demo1.png" alt="Dashboard" width="600"><br>
+  <em>Responsive tabs & modern dashboard</em>
+</p>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+<h2>📌 Contribution</h2>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<p>
+Pull requests and new ideas are always welcome! If you find a bug or want to improve the design, feel free to fork this repo and create a PR.
+</p>
+
+---
+
+<h2>📄 License</h2>
+
+<p>
+MIT License – feel free to use, share, and build on top of Spenalytica.
+</p>
+
+---
+
+<p align="center">
+  ❤️ Made with passion and coffee
+</p>
