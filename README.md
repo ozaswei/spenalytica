@@ -1,4 +1,5 @@
 Spenalytica
+
 Spenalytica is a modern personal finance tracker built to help users understand and manage their money better. With support for manual data entry and CSV/Excel uploads, it automatically identifies recurring subscriptions, visualizes spending patterns with pie charts, and shows monthly savings trends with bar charts.
 
 Whether you're aiming to reduce expenses, track where your money goes, or simply build healthier financial habits, Spenalytica makes it effortless through an intuitive and clean interface.
