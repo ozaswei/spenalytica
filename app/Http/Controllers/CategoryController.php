@@ -16,7 +16,7 @@ class CategoryController extends Controller
         if (Category::create([
             'category' => $request->categoryName,
             'userId' => Auth::id(),
-            'description' => $request->description,
+            'description' => $request->cdescription,
         ])) {
             return redirect()->back()->with('success', 'Category added successfully.');
         } else {

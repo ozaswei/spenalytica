@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,6 +60,8 @@ class ProfileController extends Controller
     }
 
     public function homePage(){
-        return view('spenalytica.homePage');
+        //get the categories
+        $categories = Category::where('userId',Auth::id())->get();
+        return view('spenalytica.homePage',compact('categories'));
     }
 }

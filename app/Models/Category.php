@@ -15,4 +15,9 @@ class Category extends Model
     {
         return $this->belongsTo(User::class, 'userId');
     }
+
+    //one category can have many expenses
+    public function expenses(){
+        return $this->hasMany(Expense::class,'categoryId');
+    }
 }

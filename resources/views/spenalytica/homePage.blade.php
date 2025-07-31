@@ -104,19 +104,40 @@
                 <p>This is your spending overview. (Add charts, summaries, etc.)</p>
             </div>
             <div id="addExpense" class="tab-content">
-                <form class="form-group">
-                    <input type="text" placeholder="Expense Name" class="form-control" required>
-                    <select name="" id="">
-                        <option disabled selected>-- Category --</option>
-                        <option value=""></option>
-                    </select>
-                    <input type="text" placeholder="Expense Name" class="form-control" required>
-                    <input type="number" placeholder="Amount" required>
-                    <button type="submit" class="modal-button">Save Expense</button>
+                <h3>Add Expenses</h3>
+                <form class="form-group" method="POST" action="{{route('addExpense')}}">
+                    @csrf
+                    <div class="mb-2">
+                        <input type="text" placeholder="Name" class="form-control" name="expense" value="{{old('expense')}}" required>
+                    </div>
+                    <div class="mb-2">
+                        <select name="categoryId" id="" class="form-control">
+                            <option disabled selected>-- Category --</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="edescription" class="form-label">Subscription : </label>
+                        <input type="radio" value="0" name="subscription"> Yes
+                        <input type="radio" value="1" name="subscription"> No
+                    </div>
+                    <div class="input-group mb-2">
+                        <input type="number" placeholder="Expense Cost" class="form-control" name="cost" step="any" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="edescription" class="form-label">Description</label>
+                        <textarea name="edescription" id="edescription" cols="30" rows="10" class=form-control>{{ old('edescription') }}</textarea>
+                    </div>
+                    <div class="mb-2">
+                        <button type="submit" class="btn btn-success">Save Expense</button>
+                    </div>
                 </form>
             </div>
             <div id="addIncome" class="tab-content">
                 <form>
+                    @csrf
                     <input type="text" placeholder="Income Source" required>
                     <input type="number" placeholder="Amount" required>
                     <button type="submit" class="modal-button">Save Income</button>
@@ -124,15 +145,15 @@
             </div>
             <div id="category" class="tab-content">
                 <h3>Add Category</h3>
-                <form class="form-group" action="{{route('addCategory')}}" method="POST">
+                <form class="form-group" action="{{ route('addCategory') }}" method="POST">
                     @csrf
                     <div class="input-group mb-2">
-                        <input type="text" placeholder="Category Name*" name="categoryName" class="form-control" value="{{old('categoryName')}}"
-                            required>
+                        <input type="text" placeholder="Category Name*" name="categoryName" class="form-control"
+                            value="{{ old('categoryName') }}" required>
                     </div>
                     <div class="input-group mb-2">
-                        <textarea name="description" id="" cols="30" rows="10" class="form-control"
-                            placeholder="Category Description">{{old('description')}}</textarea>
+                        <textarea name="cdescription" id="" cols="30" rows="10" class="form-control"
+                            placeholder="Category Description">{{ old('cdescription') }}</textarea>
                     </div>
                     <button type="submit" class="modal-button">Add Category</button>
                 </form>

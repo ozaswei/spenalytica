@@ -46,9 +46,14 @@ class User extends Authenticatable
         ];
     }
 
-    //User has many categories
+    //User has many categories, here we dont need foreign key because user table has 'id' field 
     public function categories()
     {
         return $this->hasMany(Category::class);
+    }
+
+    //User can have many expenses
+    public function expenses(){
+        return $this->hasMany(Expense::class);
     }
 }
