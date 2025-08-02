@@ -105,13 +105,14 @@
             </div>
             <div id="addExpense" class="tab-content">
                 <h3>Add Expenses</h3>
-                <form class="form-group" method="POST" action="{{route('addExpense')}}">
+                <form class="form-group" method="POST" action="{{ route('addExpense') }}">
                     @csrf
                     <div class="mb-2">
-                        <input type="text" placeholder="Name" class="form-control" name="expense" value="{{old('expense')}}" required>
+                        <input type="text" placeholder="Name" class="form-control" name="expense"
+                            value="{{ old('expense') }}" required>
                     </div>
                     <div class="mb-2">
-                        <select name="categoryId" id="" class="form-control">
+                        <select name="ecategoryId" id="" class="form-control">
                             <option disabled selected>-- Category --</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->category }}</option>
@@ -119,28 +120,55 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label for="edescription" class="form-label">Subscription : </label>
-                        <input type="radio" value="0" name="subscription"> Yes
-                        <input type="radio" value="1" name="subscription"> No
+                        <label for="subscription" class="form-label">Subscription : </label>
+                        <input type="radio" value="1" name="subscription"> Yes
+                        <input type="radio" value="0" name="subscription"> No
                     </div>
                     <div class="input-group mb-2">
-                        <input type="number" placeholder="Expense Cost" class="form-control" name="cost" step="any" required>
+                        <input type="number" placeholder="Expense Cost" class="form-control" name="cost" step="any"
+                            required>
                     </div>
                     <div class="mb-2">
                         <label for="edescription" class="form-label">Description</label>
                         <textarea name="edescription" id="edescription" cols="30" rows="10" class=form-control>{{ old('edescription') }}</textarea>
                     </div>
                     <div class="mb-2">
-                        <button type="submit" class="btn btn-success">Save Expense</button>
+                        <button type="submit" class="btn btn-success">Add Expense</button>
                     </div>
                 </form>
             </div>
             <div id="addIncome" class="tab-content">
-                <form>
+                <h3>Add Income</h3>
+                <form class="form-group" method="POST" action="{{ route('addIncome') }}">
                     @csrf
-                    <input type="text" placeholder="Income Source" required>
-                    <input type="number" placeholder="Amount" required>
-                    <button type="submit" class="modal-button">Save Income</button>
+                    <div class="mb-2">
+                        <input type="text" placeholder="Income Label" class="form-control" name="label"
+                            value="{{ old('label') }}" required>
+                    </div>
+                    <div class="mb-2">
+                        <select name="icategoryId" id="" class="form-control">
+                            <option disabled selected>-- Category --</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label for="idescription" class="form-label">Is it a Monthly Recurring Revenue (MRR) : </label>
+                        <input type="radio" value="1" name="mrr"> Yes
+                        <input type="radio" value="0" name="mrr"> No
+                    </div>
+                    <div class="input-group mb-2">
+                        <input type="number" placeholder="Revenue" class="form-control" name="revenue" step="any"
+                            required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="idescription" class="form-label">Description</label>
+                        <textarea name="idescription" id="idescription" cols="30" rows="10" class=form-control>{{ old('idescription') }}</textarea>
+                    </div>
+                    <div class="mb-2">
+                        <button type="submit" class="btn btn-success">Add Income</button>
+                    </div>
                 </form>
             </div>
             <div id="category" class="tab-content">

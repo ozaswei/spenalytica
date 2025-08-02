@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\IncomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/addCategory',[CategoryController::class,'addCategory'])->name('addCategory');
     Route::post('/addExpense',[ExpenseController::class,'addExpense'])->name('addExpense');
+    Route::post('/addIncome',[IncomeController::class,'addIncome'])->name('addIncome');
 });
 
 require __DIR__.'/auth.php';

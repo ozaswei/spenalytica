@@ -20,4 +20,9 @@ class Category extends Model
     public function expenses(){
         return $this->hasMany(Expense::class,'categoryId');
     }
+
+    //one category has many incomes
+    public function incomes(){
+        return $this->hasMany(Income::class,'categoryId');
+    }
 }

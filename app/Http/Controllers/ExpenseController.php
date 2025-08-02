@@ -12,7 +12,7 @@ class ExpenseController extends Controller
     {
         $request->validate([
             'expense' => ['required', 'unique:' . Expense::class],
-            'categoryId' => 'required',
+            'ecategoryId' => 'required',
             'subscription' => 'required',
             'cost' => 'required',
         ]);
@@ -20,7 +20,7 @@ class ExpenseController extends Controller
         if (Expense::create([
             'expense' => $request->expense,
             'userId' => Auth::id(),
-            'categoryId' => $request->categoryId,
+            'categoryId' => $request->ecategoryId,
             'subscription' => $request->subscription,
             'cost' => $request->cost,
             'description' => $request->edescription
