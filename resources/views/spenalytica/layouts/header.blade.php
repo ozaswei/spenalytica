@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <!-- navbar css -->
     <link rel="stylesheet" href="{{ asset('css/navbar.css') }}">
+    <!-- datatable css -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <!-- custom Css -->
     <style>
         @yield('customCss')

@@ -106,86 +106,182 @@
             </div>
 
             <div id="addExpense" class="tab-content">
-                <h3>Add Expenses</h3>
-                <form method="POST" action="{{ route('addExpense') }}">
-                    @csrf
-                    <div class="mb-2">
-                        <input type="text" name="expense" placeholder="Name" class="form-control"
-                            value="{{ old('expense') }}" required>
+                <div class="card">
+                    <div class="card-header">
+                        Add Expenses
                     </div>
-                    <div class="mb-2">
-                        <select name="ecategoryId" class="form-control" required>
-                            <option disabled selected>-- Category --</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->category }}</option>
-                            @endforeach
-                        </select>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('addExpense') }}">
+                            @csrf
+                            <div class="mb-2">
+                                <input type="text" name="expense" placeholder="Name" class="form-control"
+                                    value="{{ old('expense') }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <select name="ecategoryId" class="form-control" required>
+                                    <option disabled selected>-- Category --</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Subscription:</label>
+                                <input type="radio" value="1" name="subscription"> Yes
+                                <input type="radio" value="0" name="subscription"> No
+                            </div>
+                            <div class="mb-2">
+                                <input type="number" name="cost" placeholder="Expense Cost" class="form-control"
+                                    step="any" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Description</label>
+                                <textarea name="edescription" cols="30" rows="5" class="form-control">{{ old('edescription') }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Add Expense</button>
+                        </form>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Subscription:</label>
-                        <input type="radio" value="1" name="subscription"> Yes
-                        <input type="radio" value="0" name="subscription"> No
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header">All Expenses Added</div>
+                    <div class="card-body">
+                        <table id="expenseTable" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Expense</th>
+                                    <th>Category</th>
+                                    <th>Cost</th>
+                                    <th>Added at</th>
+                                    <th>Updated at</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($expenses as $expense)
+                                    <tr>
+                                        <td>{{ $expense->expense }}</td>
+                                        <td>{{ $expense->category->category }}</td>
+                                        <td>{{ $expense->cost }}</td>
+                                        <td>{{ $expense->created_at }}</td>
+                                        <td>{{ $expense->updated_at }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="mb-2">
-                        <input type="number" name="cost" placeholder="Expense Cost" class="form-control" step="any"
-                            required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Description</label>
-                        <textarea name="edescription" cols="30" rows="5" class="form-control">{{ old('edescription') }}</textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success">Add Expense</button>
-                </form>
+                </div>
             </div>
 
             <div id="addIncome" class="tab-content">
-                <h3>Add Income</h3>
-                <form method="POST" action="{{ route('addIncome') }}">
-                    @csrf
-                    <div class="mb-2">
-                        <input type="text" name="label" placeholder="Income Label" class="form-control"
-                            value="{{ old('label') }}" required>
+                <div class="card">
+                    <div class="card-header">Add Income</div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('addIncome') }}">
+                            @csrf
+                            <div class="mb-2">
+                                <input type="text" name="label" placeholder="Income Label" class="form-control"
+                                    value="{{ old('label') }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <select name="icategoryId" class="form-control" required>
+                                    <option disabled selected>-- Category --</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Is it a Monthly Recurring Revenue (MRR):</label>
+                                <input type="radio" value="1" name="mrr"> Yes
+                                <input type="radio" value="0" name="mrr"> No
+                            </div>
+                            <div class="mb-2">
+                                <input type="number" name="revenue" placeholder="Revenue" class="form-control"
+                                    step="any" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Description</label>
+                                <textarea name="idescription" cols="30" rows="5" class="form-control">{{ old('idescription') }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Add Income</button>
+                        </form>
                     </div>
-                    <div class="mb-2">
-                        <select name="icategoryId" class="form-control" required>
-                            <option disabled selected>-- Category --</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->category }}</option>
-                            @endforeach
-                        </select>
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header">All Income Revenues Added</div>
+                    <div class="card-body">
+                        <table id="incomeTable" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Income</th>
+                                    <th>Category</th>
+                                    <th>Cost</th>
+                                    <th>Added at</th>
+                                    <th>Updated at</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($incomes as $income)
+                                    <tr>
+                                        <td>{{ $income->label }}</td>
+                                        <td>{{ $income->category->category }}</td>
+                                        <td>{{ $income->revenue }}</td>
+                                        <td>{{ $income->created_at }}</td>
+                                        <td>{{ $income->updated_at }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Is it a Monthly Recurring Revenue (MRR):</label>
-                        <input type="radio" value="1" name="mrr"> Yes
-                        <input type="radio" value="0" name="mrr"> No
-                    </div>
-                    <div class="mb-2">
-                        <input type="number" name="revenue" placeholder="Revenue" class="form-control" step="any"
-                            required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Description</label>
-                        <textarea name="idescription" cols="30" rows="5" class="form-control">{{ old('idescription') }}</textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success">Add Income</button>
-                </form>
+                </div>
             </div>
 
             <div id="category" class="tab-content">
-                <h3>Add Category</h3>
-                <form method="POST" action="{{ route('addCategory') }}">
-                    @csrf
-                    <div class="mb-2">
-                        <input type="text" name="categoryName" placeholder="Category Name*" class="form-control"
-                            value="{{ old('categoryName') }}" required>
+                <div class="card">
+                    <div class="card-header">
+                        Add Category
                     </div>
-                    <div class="mb-2">
-                        <textarea name="cdescription" cols="30" rows="5" class="form-control" placeholder="Category Description">{{ old('cdescription') }}</textarea>
+
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('addCategory') }}">
+                            @csrf
+                            <div class="mb-2">
+                                <input type="text" name="categoryName" placeholder="Category Name*"
+                                    class="form-control" value="{{ old('categoryName') }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <textarea name="cdescription" cols="30" rows="5" class="form-control"
+                                    placeholder="Category Description">{{ old('cdescription') }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Add Category</button>
+                        </form>
                     </div>
-                    <button type="submit" class="btn btn-success">Add Category</button>
-                </form>
+                </div>
+                <div class="card mt-2">
+                    <div class="card-header">
+                        All Categories added
+                    </div>
+                    <div class="card-body">
+                        <table id="categoryTable" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Added at</th>
+                                    <th>Updated at</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($categories as $category)
+                                    <tr>
+                                        <td>{{ $category->category }}</td>
+                                        <td>{{ $category->created_at }}</td>
+                                        <td>{{ $category->updated_at }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
     </main>
 @endsection
 
@@ -205,6 +301,16 @@
                     document.getElementById(target).classList.add("active");
                 });
             });
+        });
+        //data table
+        $(document).ready(function() {
+            $('#expenseTable').DataTable();
+        });
+        $(document).ready(function() {
+            $('#incomeTable').DataTable();
+        });
+        $(document).ready(function() {
+            $('#categoryTable').DataTable();
         });
     </script>
 @endsection

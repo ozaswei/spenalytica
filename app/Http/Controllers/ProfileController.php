@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Category;
+use App\Models\Expense;
+use App\Models\Income;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,9 +61,17 @@ class ProfileController extends Controller
         return Redirect::to('/');
     }
 
-    public function homePage(){
+    public function homePage()
+    {
+        $userId = Auth::id();
         //get the categories
-        $categories = Category::where('userId',Auth::id())->get();
-        return view('spenalytica.homePage',compact('categories'));
+        $categories = Category::where('userId', $userId)->get();
+
+        //expenses
+        $expenses = Expense::where('userId',$userId)->get();
+
+        //incomes
+        $incomes = Income::where('userId',$userId)->get();
+        return view('spenalytica.homePage', compact('categories','expenses','incomes'));
     }
 }

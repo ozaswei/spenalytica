@@ -17,6 +17,6 @@ class Expense extends Model
     //One category can many expenses
     public function category()
     {
-        return $this->hasOne(Category::class, 'userId');
+        return $this->belongsTo(Category::class,'categoryId','id');
     }
 }
