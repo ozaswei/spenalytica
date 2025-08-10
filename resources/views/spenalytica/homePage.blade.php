@@ -143,16 +143,24 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header">All Expenses Added</div>
+                    <div class="card-header">
+                        All Expenses Added
+                        <div class="mb-3">
+                            <label for="expenseMonthFilter">Filter Expenses by Month:</label>
+                            <input type="month" id="expenseMonthFilter" name="expenseMonthFilter" class="form-control">
+                        </div>
+                    </div>
                     <div class="card-body">
                         <table id="expenseTable" class="display">
                             <thead>
                                 <tr>
                                     <th>Expense</th>
                                     <th>Category</th>
+                                    <th>Subscription</th>
                                     <th>Cost</th>
                                     <th>Added at</th>
                                     <th>Updated at</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,9 +168,23 @@
                                     <tr>
                                         <td>{{ $expense->expense }}</td>
                                         <td>{{ $expense->category->category }}</td>
+                                        <td>
+                                            @if ($expense->subscription)
+                                                Yes
+                                            @else
+                                                No
+                                            @endif
+                                        </td>
                                         <td>{{ $expense->cost }}</td>
-                                        <td>{{ $expense->created_at }}</td>
-                                        <td>{{ $expense->updated_at }}</td>
+                                        <td>{{ $expense->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($expense->created_at != $expense->updated_at)
+                                                {{ $expense->updated_at->diffForHumans() }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td></td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -173,7 +195,9 @@
 
             <div id="addIncome" class="tab-content">
                 <div class="card">
-                    <div class="card-header">Add Income</div>
+                    <div class="card-header">
+                        Add Income
+                    </div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('addIncome') }}">
                             @csrf
@@ -207,7 +231,13 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header">All Income Revenues Added</div>
+                    <div class="card-header">
+                        All Income Revenues Added
+                        <div class="mb-3">
+                            <label for="incomeMonthFilter">Filter Income by Month:</label>
+                            <input type="month" id="incomeMonthFilter" name="incomeMonthFilter" class="form-control">
+                        </div>
+                    </div>
                     <div class="card-body">
                         <table id="incomeTable" class="display">
                             <thead>
@@ -217,6 +247,7 @@
                                     <th>Cost</th>
                                     <th>Added at</th>
                                     <th>Updated at</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -225,8 +256,15 @@
                                         <td>{{ $income->label }}</td>
                                         <td>{{ $income->category->category }}</td>
                                         <td>{{ $income->revenue }}</td>
-                                        <td>{{ $income->created_at }}</td>
-                                        <td>{{ $income->updated_at }}</td>
+                                        <td>{{ $income->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($income->created_at != $income->updated_at)
+                                                {{ $income->updated_at->diffForHumans() }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td></td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -273,8 +311,14 @@
                                 @foreach ($categories as $category)
                                     <tr>
                                         <td>{{ $category->category }}</td>
-                                        <td>{{ $category->created_at }}</td>
-                                        <td>{{ $category->updated_at }}</td>
+                                        <td>{{ $category->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($category->created_at != $category->updated_at)
+                                                {{ $category->updated_at->diffForHumans() }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -287,6 +331,7 @@
 
 @section('customJavascript')
     <script>
+        //tab link javascript
         document.addEventListener("DOMContentLoaded", () => {
             const tabLinks = document.querySelectorAll(".tab-link");
             const tabContents = document.querySelectorAll(".tab-content");
@@ -302,6 +347,7 @@
                 });
             });
         });
+
         //data table
         $(document).ready(function() {
             $('#expenseTable').DataTable();
@@ -311,6 +357,57 @@
         });
         $(document).ready(function() {
             $('#categoryTable').DataTable();
+        });
+
+        //default datatable value 
+        document.addEventListener("DOMContentLoaded", () => {
+            // Set current month as default value YYYY-MM
+            function setCurrentMonthInput(id) {
+                const input = document.getElementById(id);
+                if (input) {
+                    const now = new Date();
+                    const month = now.getMonth() + 1; // getMonth() is 0-based
+                    const monthString = month < 10 ? `0${month}` : month;
+                    const defaultValue = `${now.getFullYear()}-${monthString}`;
+                    input.value = defaultValue;
+                }
+            }
+
+            setCurrentMonthInput('expenseMonthFilter');
+            setCurrentMonthInput('incomeMonthFilter');
+
+            // TODO: Add your filtering logic here
+            // For example, filter the DataTables based on selected month
+            // You might want to listen to 'change' event on these inputs to update tables dynamically
+
+            //once the date is selected 
+            function filterByMonth(tableId, dateColumnIndex, monthValue) {
+                const year = monthValue.substring(0, 4);
+                const month = monthValue.substring(5, 7);
+
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    if (settings.nTable.id !== tableId) return true;
+
+                    const dateStr = data[dateColumnIndex]; // Use the passed parameter here
+                    const date = new Date(dateStr);
+
+                    return date.getFullYear() == year && (date.getMonth() + 1) == parseInt(month);
+                });
+
+                $(`#${tableId}`).DataTable().draw();
+
+                $.fn.dataTable.ext.search.pop();
+            }
+
+            document.getElementById('expenseMonthFilter').addEventListener('change', function() {
+                filterByMonth('expenseTable', 4, this.value);
+            });
+
+            document.getElementById('incomeMonthFilter').addEventListener('change', function() {
+                filterByMonth('incomeTable', 3, this.value);
+            });
+
+
         });
     </script>
 @endsection
