@@ -60,6 +60,12 @@
     .tab-content.active {
     display: block;
     }
+    .modal {
+    z-index: 1 !important;
+    }
+    .modal-backdrop {
+    z-index: -1 !important;
+    }
 
     footer {
     text-align: center;
@@ -305,19 +311,27 @@
                                     <th>Category</th>
                                     <th>Added at</th>
                                     <th>Updated at</th>
+                                    <th>Action </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($categories as $category)
-                                    <tr>
+                                    <tr cat-id="{{ $category->id }}" cat-name="{{ $category->category }}"
+                                        cat-description="{{ $category->description }}">
                                         <td>{{ $category->category }}</td>
-                                        <td>{{ $category->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            {{ $category->created_at->format('Y-m-d') }}</td>
                                         <td>
                                             @if ($category->created_at != $category->updated_at)
                                                 {{ $category->updated_at->diffForHumans() }}
                                             @else
                                                 -
                                             @endif
+                                        </td>
+                                        <td>
+                                            <!-- Button trigger -->
+                                            <button class="btn btn-primary editBtn" data-bs-toggle="modal"
+                                                data-bs-target="#editCategoryModal">Edit</button>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -326,28 +340,54 @@
                     </div>
                 </div>
             </div>
+            <!-- editCategory -->
+            <!-- Edit Category Modal -->
+            <div class="modal fade" id="editCategoryModal" tabindex="-9" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Category</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($errors->any() && session('editCategoryId') == $category->id)
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                            <form id="editCategoryForm" method="POST" action="{{ route('editCategory') }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="categoryName" class="form-label">Category Name</label>
+                                    <input type="text" class="form-control" id="categoryName" name="categoryName"
+                                        required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="categoryDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="categoryDescription" name="cdescription"></textarea>
+                                </div>
+                                <input type="hidden" class="form-control" id="categoryId" name="categoryId" required>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" form="editCategoryForm" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
     </main>
 @endsection
 
 @section('customJavascript')
     <script>
-        //tab link javascript
-        document.addEventListener("DOMContentLoaded", () => {
-            const tabLinks = document.querySelectorAll(".tab-link");
-            const tabContents = document.querySelectorAll(".tab-content");
-
-            tabLinks.forEach(link => {
-                link.addEventListener("click", () => {
-                    tabLinks.forEach(item => item.classList.remove("active"));
-                    tabContents.forEach(item => item.classList.remove("active"));
-
-                    link.classList.add("active");
-                    const target = link.getAttribute("data-target");
-                    document.getElementById(target).classList.add("active");
-                });
-            });
-        });
-
         //data table
         $(document).ready(function() {
             $('#expenseTable').DataTable();
@@ -361,6 +401,37 @@
 
         //default datatable value 
         document.addEventListener("DOMContentLoaded", () => {
+
+            //tab link javascript
+            const tabLinks = document.querySelectorAll(".tab-link");
+            const tabContents = document.querySelectorAll(".tab-content");
+
+            tabLinks.forEach(link => {
+                link.addEventListener("click", () => {
+                    tabLinks.forEach(item => item.classList.remove("active"));
+                    tabContents.forEach(item => item.classList.remove("active"));
+
+                    link.classList.add("active");
+                    const target = link.getAttribute("data-target");
+                    document.getElementById(target).classList.add("active");
+                });
+            });
+
+            //when validation get success or failed , stay on the same tab 
+            let activeTab = "{{ session('activeTab', 'overview') }}"; // default to overview
+            document.querySelectorAll(".tab-link").forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute("data-target") === activeTab) {
+                    link.classList.add("active");
+                }
+            });
+            document.querySelectorAll(".tab-content").forEach(content => {
+                content.classList.remove("active");
+                if (content.id === activeTab) {
+                    content.classList.add("active");
+                }
+            });
+
             // Set current month as default value YYYY-MM
             function setCurrentMonthInput(id) {
                 const input = document.getElementById(id);
@@ -407,6 +478,31 @@
                 filterByMonth('incomeTable', 3, this.value);
             });
 
+            //edit model for category 
+            document.querySelectorAll('.editBtn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const categoryId = row.getAttribute('cat-id');
+                    const categoryName = row.getAttribute('cat-name');
+                    const categoryDescription = row.getAttribute('cat-description');
+                    document.getElementById('categoryName').value = categoryName;
+                    document.getElementById('categoryDescription').value = categoryDescription;
+                    document.getElementById('categoryId').value = categoryId;
+                });
+            });
+
+            //when there is validation error at category modal
+            @if ($errors->any() && session('editCategoryId'))
+                var editModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+                editModal.show();
+
+                // Also set the form action and inputs values again
+                const row = document.querySelector(`tr[cat-id="{{ session('editCategoryId') }}"]`);
+                if (row) {
+                    document.getElementById('categoryName').value = row.getAttribute('cat-name');
+                    document.getElementById('categoryDescription').value = row.getAttribute('cat-description');
+                }
+            @endif
 
         });
     </script>

@@ -23,4 +23,21 @@ class CategoryController extends Controller
             return redirect()->back()->with('failed', 'Category failed to add.');
         }
     }
+
+    public function editCategory(Request $request)
+    {
+        $request->validate([
+            'categoryName' => 'required|string',
+            'cdescription' => 'nullable|string',
+        ]);
+        // If success, update category
+        $category = Category::findOrFail($request->categoryId);
+        $category->category = $request->categoryName;
+        $category->description = $request->cdescription;
+        $category->save();
+
+        return redirect()->back()
+            ->with('success', 'Category updated successfully')
+            ->with('activeTab', 'category');
+    }
 }
