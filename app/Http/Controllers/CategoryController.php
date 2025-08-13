@@ -18,9 +18,9 @@ class CategoryController extends Controller
             'userId' => Auth::id(),
             'description' => $request->cdescription,
         ])) {
-            return redirect()->back()->with('success', 'Category added successfully.');
+            return redirect()->back()->with('success', 'Category added successfully.')->with('activeTab', 'category');
         } else {
-            return redirect()->back()->with('failed', 'Category failed to add.');
+            return redirect()->back()->with('failed', 'Category failed to add.')->with('activeTab', 'category');
         }
     }
 
@@ -34,10 +34,27 @@ class CategoryController extends Controller
         $category = Category::findOrFail($request->categoryId);
         $category->category = $request->categoryName;
         $category->description = $request->cdescription;
-        $category->save();
-
-        return redirect()->back()
-            ->with('success', 'Category updated successfully')
-            ->with('activeTab', 'category');
+        if ($category->save()) {
+            return redirect()->back()
+                ->with('success', 'Category updated successfully')
+                ->with('activeTab', 'category');
+        } else {
+            return redirect()->back()
+                ->with('failed', 'Category update failed')
+                ->with('activeTab', 'category');
+        }
+    }
+    public function deleteCategory(Request $request)
+    {
+        $category = Category::find($request->categoryId);
+        if ($category->delete()) {
+            return redirect()->back()
+                ->with('success', 'Category data deleted successfully')
+                ->with('activeTab', 'category');
+        } else {
+            return redirect()->back()
+                ->with('failed', 'Category data deletion failed')
+                ->with('activeTab', 'category');
+        }
     }
 }

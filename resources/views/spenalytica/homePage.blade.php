@@ -111,6 +111,7 @@
                 <p>This is your spending overview. (Add charts, summaries, etc.)</p>
             </div>
 
+            <!-- Expense Tab -->
             <div id="addExpense" class="tab-content">
                 <div class="card">
                     <div class="card-header">
@@ -171,7 +172,10 @@
                             </thead>
                             <tbody>
                                 @foreach ($expenses as $expense)
-                                    <tr>
+                                    <tr e-id="{{ $expense->id }}" e-name="{{ $expense->expense }}"
+                                        e-category="{{ $expense->categoryId }}"
+                                        e-subscription="{{ $expense->subscription }}" e-cost="{{ $expense->cost }}"
+                                        e-description="{{ $expense->description }}">
                                         <td>{{ $expense->expense }}</td>
                                         <td>{{ $expense->category->category }}</td>
                                         <td>
@@ -190,7 +194,23 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td></td>
+                                        <td>
+                                            <div class="d-flex flex-row justify-content-around">
+                                                <div>
+                                                    <!-- edit Button trigger -->
+                                                    <button class="btn btn-primary editExpenseBtn" data-bs-toggle="modal"
+                                                        data-bs-target="#editExpenseModal">Edit</button>
+                                                </div>
+                                                <div>
+                                                    <!-- delete button -->
+                                                    <form action="{{ route('deleteExpense') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" value="{{ $expense->id }}" name="expenseId">
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -199,6 +219,7 @@
                 </div>
             </div>
 
+            <!-- Income Tab -->
             <div id="addIncome" class="tab-content">
                 <div class="card">
                     <div class="card-header">
@@ -258,7 +279,10 @@
                             </thead>
                             <tbody>
                                 @foreach ($incomes as $income)
-                                    <tr>
+                                    <tr income-id="{{ $income->id }}" income-name="{{ $income->label }}"
+                                        income-category ="{{ $income->category->category }}"
+                                        income-revenue = "{{ $income->revenue }}"
+                                        income-description="{{ $income->description }}">
                                         <td>{{ $income->label }}</td>
                                         <td>{{ $income->category->category }}</td>
                                         <td>{{ $income->revenue }}</td>
@@ -270,7 +294,30 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td></td>
+                                        <td>
+                                            <div class="d-flex flex-row justify-content-around">
+                                                <div>
+                                                    <!-- edit Button trigger -->
+                                                    <button class="btn btn-primary editIncomeBtn"
+                                                        data-id="{{ $income->id }}" data-label="{{ $income->label }}"
+                                                        data-category="{{ $income->categoryId }}"
+                                                        data-mrr="{{ $income->mrr }}"
+                                                        data-revenue="{{ $income->revenue }}"
+                                                        data-description="{{ $income->description }}"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editIncomeModal">Edit</button>
+                                                </div>
+                                                <div>
+                                                    <!-- delete button -->
+                                                    <form action="{{ route('deleteIncome') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" value="{{ $income->id }}"
+                                                            name="incomeId">
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -279,6 +326,7 @@
                 </div>
             </div>
 
+            <!-- Category Tab -->
             <div id="category" class="tab-content">
                 <div class="card">
                     <div class="card-header">
@@ -329,9 +377,22 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <!-- Button trigger -->
-                                            <button class="btn btn-primary editBtn" data-bs-toggle="modal"
-                                                data-bs-target="#editCategoryModal">Edit</button>
+                                            <div class="d-flex flex-row justify-content-around">
+                                                <div>
+                                                    <!-- edit Button trigger -->
+                                                    <button class="btn btn-primary editCategoryBtn" data-bs-toggle="modal"
+                                                        data-bs-target="#editCategoryModal">Edit</button>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <!-- delete button -->
+                                                    <form action="{{ route('deleteCategory') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" value="{{ $category->id }}"
+                                                            name="categoryId">
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -340,7 +401,6 @@
                     </div>
                 </div>
             </div>
-            <!-- editCategory -->
             <!-- Edit Category Modal -->
             <div class="modal fade" id="editCategoryModal" tabindex="-9" aria-hidden="true">
                 <div class="modal-dialog">
@@ -351,7 +411,7 @@
                                 aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            @if ($errors->any() && session('editCategoryId') == $category->id)
+                            @if ($errors->any() && session('editCategoryId'))
                                 <div class="alert alert-danger">
                                     <ul>
                                         @foreach ($errors->all() as $error)
@@ -377,11 +437,146 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" form="editCategoryForm" class="btn btn-primary">Save changes</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Edit Income Modal -->
+            <div class="modal fade" id="editIncomeModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Income Data</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($errors->any() && session('editIncomeId'))
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form id="editIncomeForm" method="POST" action="{{ route('editIncome') }}">
+                                @csrf
+                                <input type="hidden" id="incomeId" name="incomeId">
+
+                                <div class="mb-2">
+                                    <label class="form-label">Income</label>
+                                    <input type="text" id="editLabel" name="label" placeholder="Income Label"
+                                        class="form-control" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label">Category</label>
+                                    <select id="editCategoryId" name="icategoryId" class="form-control" required>
+                                        <option disabled>-- Category --</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label">Is it a Monthly Recurring Revenue (MRR):</label>
+                                    <input type="radio" id="editMrrYes" value="1" name="mrr"> Yes
+                                    <input type="radio" id="editMrrNo" value="0" name="mrr"> No
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label">Revenue</label>
+                                    <input type="number" id="editRevenue" name="revenue" placeholder="Revenue"
+                                        class="form-control" step="any" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label">Description</label>
+                                    <textarea id="editDescription" name="idescription" cols="30" rows="5" class="form-control"></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" form="editIncomeForm" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Expense Modal -->
+            <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Expense</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($errors->any() && session('editExpenseId'))
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form id="editExpenseForm" method="POST" action="{{ route('editExpense') }}">
+                                @csrf
+                                <input type="hidden" id="expenseId" name="expenseId" required>
+
+                                <div class="mb-3">
+                                    <label for="expenseName" class="form-label">Expense Name</label>
+                                    <input type="text" class="form-control" id="expenseName" name="expense" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="expenseCategory" class="form-label">Category</label>
+                                    <select id="expenseCategory" name="ecategoryId" class="form-control" required>
+                                        <option disabled>-- Category --</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Subscription:</label><br>
+                                    <input type="radio" id="subYes" value="1" name="subscription"> Yes
+                                    <input type="radio" id="subNo" value="0" name="subscription"> No
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="expenseCost" class="form-label">Cost</label>
+                                    <input type="number" step="any" id="expenseCost" name="cost"
+                                        class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="expenseDescription" class="form-label">Description</label>
+                                    <textarea id="expenseDescription" name="edescription" rows="4" class="form-control"></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" form="editExpenseForm" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
 
     </main>
 @endsection
@@ -478,8 +673,8 @@
                 filterByMonth('incomeTable', 3, this.value);
             });
 
-            //edit model for category 
-            document.querySelectorAll('.editBtn').forEach(button => {
+            //edit Category model 
+            document.querySelectorAll('.editCategoryBtn').forEach(button => {
                 button.addEventListener('click', function() {
                     const row = this.closest('tr');
                     const categoryId = row.getAttribute('cat-id');
@@ -501,6 +696,83 @@
                 if (row) {
                     document.getElementById('categoryName').value = row.getAttribute('cat-name');
                     document.getElementById('categoryDescription').value = row.getAttribute('cat-description');
+                }
+            @endif
+            //edit Income model
+            const editButtons = document.querySelectorAll('.editIncomeBtn');
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Get data attributes from the clicked button
+                    const id = this.getAttribute('data-id');
+                    const label = this.getAttribute('data-label');
+                    const category = this.getAttribute('data-category');
+                    const mrr = this.getAttribute('data-mrr');
+                    const revenue = this.getAttribute('data-revenue');
+                    const description = this.getAttribute('data-description');
+
+                    // Fill modal fields
+                    document.getElementById('incomeId').value = id;
+                    document.getElementById('editLabel').value = label;
+                    document.getElementById('editCategoryId').value = category;
+                    document.getElementById(mrr === "1" ? 'editMrrYes' : 'editMrrNo')
+                        .checked = true;
+                    document.getElementById('editRevenue').value = revenue;
+                    document.getElementById('editDescription').value = description;
+                });
+            });
+            //When there is validation error at income modal
+            @if ($errors->any() && session('editIncomeId'))
+                var editIncomeModal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
+                editIncomeModal.show();
+
+                // Set the form fields again based on the table row attributes
+                const incomeRow = document.querySelector(`tr[income-id="{{ session('editIncomeId') }}"]`);
+                if (incomeRow) {
+                    document.getElementById('incomeName').value = incomeRow.getAttribute('income-name');
+                    document.getElementById('incomeCategory').value = incomeRow.getAttribute('income-category');
+                    document.getElementById('incomeRevenue').value = incomeRow.getAttribute('income-revenue');
+                    document.getElementById('incomeDescription').value = incomeRow.getAttribute(
+                        'income-description');
+                }
+            @endif
+
+            // When clicking "Edit" on Expense
+            document.querySelectorAll('.editExpenseBtn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+
+                    document.getElementById('expenseId').value = row.getAttribute('e-id');
+                    document.getElementById('expenseName').value = row.getAttribute('e-name');
+                    document.getElementById('expenseCategory').value = row.getAttribute(
+                        'e-category');
+                    document.getElementById('expenseCost').value = row.getAttribute('e-cost');
+                    document.getElementById('expenseDescription').value = row.getAttribute(
+                        'e-description');
+
+                    // Set subscription radio
+                    const subValue = row.getAttribute('e-subscription');
+                    document.getElementById('subYes').checked = subValue === "1";
+                    document.getElementById('subNo').checked = subValue === "0";
+                });
+            });
+
+            // When validation error occurs for edit expense
+            @if ($errors->any() && session('editExpenseId'))
+                var editExpenseModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+                editExpenseModal.show();
+
+                const expenseRow = document.querySelector(`tr[e-id="{{ session('editExpenseId') }}"]`);
+                if (expenseRow) {
+                    document.getElementById('expenseId').value = expenseRow.getAttribute('e-id');
+                    document.getElementById('expenseName').value = expenseRow.getAttribute('e-name');
+                    document.getElementById('expenseCategory').value = expenseRow.getAttribute('e-category');
+                    document.getElementById('expenseCost').value = expenseRow.getAttribute('e-cost');
+                    document.getElementById('expenseDescription').value = expenseRow.getAttribute('e-description');
+
+                    const subValue = expenseRow.getAttribute('e-subscription');
+                    document.getElementById('subYes').checked = subValue === "1";
+                    document.getElementById('subNo').checked = subValue === "0";
                 }
             @endif
 
