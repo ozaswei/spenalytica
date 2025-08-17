@@ -109,6 +109,12 @@
 
             <div id="overview" class="tab-content active">
                 <p>This is your spending overview. (Add charts, summaries, etc.)</p>
+                <div>
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Expense Tab -->
@@ -775,6 +781,69 @@
                     document.getElementById('subNo').checked = subValue === "0";
                 }
             @endif
+
+            //Chart JS
+            // Convert Laravel data to JS
+            const expenses = @json($expenses);
+            console.log(expenses);
+            const incomes = @json($incomes);
+            const categories = @json($categories);
+            // Format expenses by category for chart
+            const expenseList = expenses.map(exp => ({
+                expense: exp.expense,
+                cost: parseFloat(exp.amount)
+            }));
+            console.log(expenseList);
+
+            // Format incomes by category for chart
+            const incomeData = {};
+            incomes.forEach(inc => {
+                const cat = categories.find(c => c.id === inc.categoryId)?.category || 'Uncategorized';
+                incomeData[cat] = (incomeData[cat] || 0) + parseFloat(inc.revenue);
+            });
+            //doughnut chart
+
+            // Helper to create Doughnut chart
+            function createDoughnutChart(canvasId, data, label) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: expenseList.map(e => e.expense),
+                        datasets: [{
+                            label: "Pie",
+                            data: expenseList.map(e => e.cost),
+                            backgroundColor: [
+                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
+                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#333',
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Create charts
+            createDoughnutChart('expenseChart', expenseList, 'Expenses by Category');
+            //createDoughnutChart('incomeChart', incomeData, 'Incomes by Category');
 
         });
     </script>
