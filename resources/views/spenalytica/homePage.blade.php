@@ -109,9 +109,14 @@
 
             <div id="overview" class="tab-content active">
                 <p>This is your spending overview. (Add charts, summaries, etc.)</p>
-                <div>
-                    <div class="chart-container">
-                        <canvas id="expenseChart"></canvas>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="expenseChart" width="30" height="30"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        
                     </div>
                 </div>
 
@@ -791,7 +796,7 @@
             // Format expenses by category for chart
             const expenseList = expenses.map(exp => ({
                 expense: exp.expense,
-                cost: parseFloat(exp.amount)
+                cost: parseFloat(exp.cost)
             }));
             console.log(expenseList);
 
