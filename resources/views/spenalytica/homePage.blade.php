@@ -112,11 +112,18 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">
-                            <canvas id="expenseChart" width="30" height="30"></canvas>
+                            <canvas id="expenseChart"></canvas>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        
+                        <div class="chart-container">
+                            <canvas id="monthlyIncomeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="monthlySavingsChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -789,26 +796,18 @@
 
             //Chart JS
             // Convert Laravel data to JS
+            var months = ["", "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
             const expenses = @json($expenses);
-            console.log(expenses);
-            const incomes = @json($incomes);
+            const monthlyDatas = @json($monthlyDatas);
             const categories = @json($categories);
             // Format expenses by category for chart
             const expenseList = expenses.map(exp => ({
                 expense: exp.expense,
                 cost: parseFloat(exp.cost)
             }));
-            console.log(expenseList);
-
-            // Format incomes by category for chart
-            const incomeData = {};
-            incomes.forEach(inc => {
-                const cat = categories.find(c => c.id === inc.categoryId)?.category || 'Uncategorized';
-                incomeData[cat] = (incomeData[cat] || 0) + parseFloat(inc.revenue);
-            });
             //doughnut chart
-
-            // Helper to create Doughnut chart
             function createDoughnutChart(canvasId, data, label) {
                 const ctx = document.getElementById(canvasId).getContext('2d');
                 return new Chart(ctx, {
@@ -846,9 +845,86 @@
                 });
             }
 
+            //bar chart
+            function createBarChart(canvasId, data, label) {
+                const bctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(bctx, {
+                    type: 'bar',
+                    data: {
+                        labels: monthlyDatas.map(e => months[e.month]),
+                        datasets: [{
+                            label: 'Total Revenue',
+                            data: monthlyDatas.map(e => e.income),
+                            backgroundColor: [
+                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
+                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#333',
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            //line chart
+            function createLineChart(canvasId, data, label) {
+                const lctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(lctx, {
+                    type: 'line',
+                    data: {
+                        labels: monthlyDatas.map(e => months[e.month]),
+                        datasets: [{
+                            label: 'Total Savings',
+                            data: monthlyDatas.map(e => e.savings),
+                            backgroundColor: [
+                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
+                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#333',
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+            }
+
             // Create charts
             createDoughnutChart('expenseChart', expenseList, 'Expenses by Category');
-            //createDoughnutChart('incomeChart', incomeData, 'Incomes by Category');
+            createBarChart('monthlyIncomeChart', monthlyDatas, 'Monthly Income');
+            createLineChart('monthlySavingsChart', monthlyDatas, 'Monthly Savings');
 
         });
     </script>

@@ -11,7 +11,7 @@ class IncomeController extends Controller
     public function addIncome(Request $request)
     {
         $request->validate([
-            'label' => ['required', 'unique:' . Income::class],
+            'label' => 'required',
             'icategoryId' => 'required',
             'mrr' => 'required',
             'revenue' => 'required',
@@ -34,7 +34,7 @@ class IncomeController extends Controller
     public function editIncome(Request $request)
     {
         $request->validate([
-            'label' => ['required', 'unique:' . Income::class],
+            'label' => 'required',
             'icategoryId' => 'required',
             'mrr' => 'required',
             'revenue' => 'required',
