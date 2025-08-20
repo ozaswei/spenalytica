@@ -71,6 +71,9 @@ class ProfileController extends Controller
         //expenses
         $expenses = Expense::where('userId', $userId)->get();
 
+        //top 5 highest expenses
+        $highestExpenses = Expense::where('userId', $userId)->orderBy('cost','desc')->take(5)->get();
+
         //incomes
         $incomes = Income::where('userId', $userId)->get();
 
@@ -125,6 +128,6 @@ class ProfileController extends Controller
         }
 
         //dd($monthlyDatas);
-        return view('spenalytica.homePage', compact('categories', 'expenses', 'incomes','monthlyDatas'));
+        return view('spenalytica.homePage', compact('categories', 'expenses','highestExpenses' ,'incomes','monthlyDatas'));
     }
 }

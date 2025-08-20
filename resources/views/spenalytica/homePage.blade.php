@@ -5,94 +5,247 @@
     body {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(90deg, #28c76f, #0099ff);
-    color: white;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(120deg, #28c76f 0%, #0099ff 100%);
+    color: #fff;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     }
+    .navbar {
+    background: rgba(0,0,0,0.15);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
 
     .large-tabs {
-    width: 100%; /* Full width */
-    max-width: 100%; /* Remove width cap */
-    height: calc(100vh - 120px); /* Full height minus navbar+footer (adjust number as needed) */
-    overflow-y: auto;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    border-radius: 0; /* Remove radius for edge-to-edge */
-    padding: 1.5rem;
-    margin: 0 auto; /* Center horizontally */
-    box-shadow: none; /* Optional: remove box shadow if you want full edge look */
+    width: 100%;
+    max-width: 1200px;
+    margin: 2rem auto 0 auto;
+    background: rgba(255,255,255,0.10);
+    border-radius: 16px;
+    padding: 2rem;
+    {{-- box-shadow: 0 6px 40px rgba(0,0,0,0.10); --}}
     }
 
     .tab-header {
     display: flex;
-    justify-content: space-around;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    margin-bottom: 1rem;
+    border-bottom: 2px solid rgba(255,255,255,0.15);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
     }
 
     .tab-link {
-    flex: 1;
-    text-align: center;
-    cursor: pointer;
-    padding: 0.8rem 1rem;
-    transition: background 0.3s, color 0.3s;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
     background: none;
+    color: #d6f8ff;
     border: none;
+    font-weight: 600;
+    font-size: 1.15rem;
+    padding: 1rem 2rem;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
     }
-
     .tab-link.active {
-    border-bottom: 3px solid #00ffc3;
-    color: #00ffc3;
+    color: #0099ff;
+    background: #fff;
+    border-bottom: 3px solid #28c76f;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06);
     }
 
     .tab-content {
     display: none;
-    padding: 1rem;
-    text-align: left;
-    color: rgba(255, 255, 255, 0.95);
+    padding: 1rem 0.5rem;
+    color: #fff;
+    min-height: 100px;
     }
-
     .tab-content.active {
     display: block;
+    animation: fadeIn 0.45s;
     }
-    .modal {
-    z-index: 1 !important;
-    }
-    .modal-backdrop {
-    z-index: -1 !important;
+    @keyframes fadeIn {
+    from {opacity:0; transform:translateY(16px);}
+    to {opacity: 1; transform: none;}
     }
 
-    footer {
-    text-align: center;
+    .card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+    .large-tabs {
     padding: 1rem;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: auto;
+    }
+    .tab-link {
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
+    }
     }
 
     @media (max-width: 768px) {
     .large-tabs {
-    height: auto;
-    padding: 1rem;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 1rem 0;
     }
     .tab-header {
     flex-direction: column;
+    gap: 0;
     }
     .tab-link {
     width: 100%;
+    border-radius: 0;
+    border: none;
     text-align: left;
-    padding: 0.8rem;
     }
     .tab-link.active {
-    border-left: 3px solid #00ffc3;
-    border-bottom: none;
+    border-left: 3px solid #0099ff;
+    background: rgba(255,255,255,0.12);
+    }
+    .card {
+    border-radius: 10px;
+    padding: 1rem;
     }
     }
+
+    /* Chart containers */
+    .chart-container {
+    background: rgba(0,0,0,0.05);
+    border-radius: 18px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    width: 100%;
+    }
+
+    /* Tables */
+    table {
+    width: 100%;
+    background: rgba(255,255,255,0.10);
+    border-radius: 8px;
+    border-collapse: collapse;
+    color: #222;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    }
+    thead {
+    background: linear-gradient(90deg, #0099ff 20%, #28c76f 100%);
+    color: #fff;
+    }
+    tbody tr:nth-of-type(even) {
+    background: rgba(0,0,0,0.03);
+    }
+    th, td {
+    padding: 0.8rem 0.7rem;
+    text-align: left;
+    font-size: 0.97rem;
+    }
+    th {
+    font-weight: 600;
+    }
+    @media (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100%;
+    }
+    th, td {
+    padding: 0.7rem 0.4rem;
+    font-size: 0.95rem;
+    }
+    thead {
+    display: none;
+    }
+    tbody tr {
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid #eee;
+    background: rgba(255,255,255,0.16);
+    border-radius: 7px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    td {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding-left: 40%;
+    min-height: 36px;
+    font-size: 1rem;
+    }
+    td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 36%;
+    padding-left: 8px;
+    color: #0099ff;
+    font-weight: 700;
+    font-size: 0.92rem;
+    }
+    }
+    /* Buttons */
+    .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    transition: background 0.14s, color 0.14s;
+    padding: 0.7rem 1.3rem;
+    min-width: 90px;
+    }
+    .btn-success {
+    background: #28c76f;
+    color: #fff;
+    border: none;
+    }
+    .btn-primary {
+    background: #0099ff;
+    color: #fff;
+    border: none;
+    }
+    .btn-danger {
+    background: #f44336;
+    color: #fff;
+    border: none;
+    }
+    .btn:hover, .btn:focus {
+    opacity: 0.90;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+    }
+
+    footer {
+    text-align: center;
+    padding: 1.2rem 0 1.2rem 0;
+    background: rgba(0,0,0,0.10);
+    color: #d8f6ed;
+    font-size: 1rem;
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    input, select, textarea {
+    border-radius: 8px;
+    border: 1px solid #cce4fa;
+    padding: 0.8rem 0.9rem;
+    background: #f2fbfc;
+    color: #333;
+    font-size: 1.06rem;
+    margin-bottom: 0.7rem;
+    transition: border 0.18s, background 0.18s;
+    }
+    input:focus, select:focus, textarea:focus {
+    outline: none;
+    border: 1.5px solid #0099ff;
+    background: #fff;
+    }
+
+    ::-webkit-input-placeholder { color: #a3babb; }
+    :-moz-placeholder { color: #a3babb; }
+    ::-moz-placeholder { color: #a3babb; }
 @endsection
 
 @section('mainContent')
@@ -112,7 +265,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">
-                            <canvas id="expenseChart"></canvas>
+                            <canvas id="monthlyExpenseChart"></canvas>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -124,6 +277,38 @@
                         <div class="chart-container">
                             <canvas id="monthlySavingsChart"></canvas>
                         </div>
+                    </div>
+                    <div class="col-md-6">
+                        <table id="highestExpense" class="display">
+                            <thead>
+                                <tr>
+                                    <th>Expense</th>
+                                    <th>Category</th>
+
+                                    <th>Cost</th>
+                                    <th>Added at</th>
+                                    <th>Updated at</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($highestExpenses as $expense)
+                                    <tr>
+                                        <td>{{ $expense->expense }}</td>
+                                        <td>{{ $expense->category->category }}</td>
+                                        <td>{{ $expense->cost }}</td>
+                                        <td>{{ $expense->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($expense->created_at != $expense->updated_at)
+                                                {{ $expense->updated_at->diffForHumans() }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -604,12 +789,13 @@
         //data table
         $(document).ready(function() {
             $('#expenseTable').DataTable();
-        });
-        $(document).ready(function() {
             $('#incomeTable').DataTable();
-        });
-        $(document).ready(function() {
             $('#categoryTable').DataTable();
+            $('#highestExpense').DataTable({
+                order: [
+                    [2, 'desc']
+                ]
+            });
         });
 
         //default datatable value 
@@ -813,10 +999,10 @@
                 return new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: expenseList.map(e => e.expense),
+                        labels: monthlyDatas.map(e => months[e.month]),
                         datasets: [{
-                            label: "Pie",
-                            data: expenseList.map(e => e.cost),
+                            label: "Total Spendings",
+                            data: monthlyDatas.map(e => e.expense),
                             backgroundColor: [
                                 '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
                                 '#3f51b5', '#009688', '#f44336', '#9c27b0'
@@ -922,7 +1108,7 @@
             }
 
             // Create charts
-            createDoughnutChart('expenseChart', expenseList, 'Expenses by Category');
+            createDoughnutChart('monthlyExpenseChart', monthlyDatas, 'Expenses by Category');
             createBarChart('monthlyIncomeChart', monthlyDatas, 'Monthly Income');
             createLineChart('monthlySavingsChart', monthlyDatas, 'Monthly Savings');
 
