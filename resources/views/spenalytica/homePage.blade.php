@@ -20,10 +20,10 @@
 
     .large-tabs {
     width: 100%;
-    max-width: 1200px;
-    margin: 2rem auto 0 auto;
-    background: rgba(255,255,255,0.10);
-    border-radius: 16px;
+    {{-- max-width: 1200px; --}}
+    {{-- margin: 2rem auto 0 auto; --}}
+    {{-- background: rgba(255,255,255,0.10); --}}
+    {{-- border-radius: 16px; --}}
     padding: 2rem;
     {{-- box-shadow: 0 6px 40px rgba(0,0,0,0.10); --}}
     }
@@ -115,13 +115,15 @@
     }
 
     /* Chart containers */
+    css
     .chart-container {
-    background: rgba(0,0,0,0.05);
-    border-radius: 18px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-    width: 100%;
+    height: 340px;
+    }
+    .chart-container canvas {
+    height: 340px !important;
+    width: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
     }
 
     /* Tables */
