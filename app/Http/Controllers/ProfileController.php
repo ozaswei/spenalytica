@@ -6,6 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,6 +66,11 @@ class ProfileController extends Controller
     public function homePage()
     {
         $userId = Auth::id();
+
+        $currentDate = Carbon::now();
+        $currentMonth = $currentDate->month;
+        $currentYear = $currentDate->year;
+
         //get the categories
         $categories = Category::where('userId', $userId)->get();
 
@@ -72,7 +78,7 @@ class ProfileController extends Controller
         $expenses = Expense::where('userId', $userId)->get();
 
         //top 5 highest expenses
-        $highestExpenses = Expense::where('userId', $userId)->orderBy('cost','desc')->take(5)->get();
+        $highestExpenses = Expense::where('userId', $userId)->orderBy('cost', 'desc')->take(5)->get();
 
         //incomes
         $incomes = Income::where('userId', $userId)->get();
@@ -126,8 +132,38 @@ class ProfileController extends Controller
                 'savings' => $savings,
             ]);
         }
-
         //dd($monthlyDatas);
-        return view('spenalytica.homePage', compact('categories', 'expenses','highestExpenses' ,'incomes','monthlyDatas'));
+        //time to broke
+        $avgSavings = $monthlyDatas->avg('savings');
+        // Current net balance (total income - total expense)
+        $currentBalance = $incomes->sum('revenue') - $expenses->sum('cost');
+
+        // Health check for the latest month
+        $latestMonth = $monthlyDatas->last();
+        $spendingHealth = 'Healthy';
+
+        if ($latestMonth->expense > $latestMonth->income * 0.9) {
+            $spendingHealth = 'Unhealthy';
+        } elseif ($latestMonth->expense > $latestMonth->income * 0.7) {
+            $spendingHealth = 'Neutral';
+        }
+
+        // Time until broke
+        $monthsUntilBroke = null;
+        if ($avgSavings < 0) {
+            $monthsUntilBroke = floor($currentBalance / abs($avgSavings));
+        }
+
+        return view('spenalytica.homePage', compact(
+            'categories',
+            'expenses',
+            'highestExpenses',
+            'incomes',
+            'monthlyDatas',
+            'spendingHealth',
+            'monthsUntilBroke',
+            'currentBalance',
+            'avgSavings'
+        ));
     }
 }

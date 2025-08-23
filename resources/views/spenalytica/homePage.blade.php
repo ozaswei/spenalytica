@@ -263,7 +263,19 @@
             </div>
 
             <div id="overview" class="tab-content active">
-                <p>This is your spending overview. (Add charts, summaries, etc.)</p>
+                <div class="card p-3 mt-4 shadow">
+                    <h4>This is your spending overview.</h4>
+                    <p><strong>Spending Health:</strong> {{ $spendingHealth }}</p>
+                    <p><strong>Current Balance:</strong> ${{ number_format($currentBalance, 2) }}</p>
+                    <p><strong>Average Savings:</strong> ${{ number_format($avgSavings, 2) }}</p>
+
+                    @if ($monthsUntilBroke)
+                        <p>⚠️ At your current rate, you’ll run out of money in <strong>{{ $monthsUntilBroke }}
+                                months</strong>.</p>
+                    @else
+                        <p>✅ You’re saving money each month. Keep it up!</p>
+                    @endif
+                </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">
