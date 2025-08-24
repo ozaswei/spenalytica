@@ -263,19 +263,19 @@
             </div>
 
             <div id="overview" class="tab-content active">
-                <div class="card p-3 mt-4 shadow">
-                    <h4>This is your spending overview.</h4>
-                    <p><strong>Spending Health:</strong> {{ $spendingHealth }}</p>
-                    <p><strong>Current Balance:</strong> ${{ number_format($currentBalance, 2) }}</p>
-                    <p><strong>Average Savings:</strong> ${{ number_format($avgSavings, 2) }}</p>
+                <div class="alert alert-info">
+                    <strong>Spending Health:</strong> {{ $spendingHealth }} <br>
+                    <strong>Current Balance:</strong> ${{ number_format($currentBalance, 2) }} <br>
+                    <strong>Average Monthly Savings:</strong> ${{ number_format($avgSavings, 2) }} <br>
 
                     @if ($monthsUntilBroke)
-                        <p>⚠️ At your current rate, you’ll run out of money in <strong>{{ $monthsUntilBroke }}
-                                months</strong>.</p>
-                    @else
-                        <p>✅ You’re saving money each month. Keep it up!</p>
+                        <strong>Warning:</strong> At this rate, you’ll run out of money in {{ $monthsUntilBroke }} months ⚠️
+                    @elseif ($financialRunway)
+                        <strong>Good News:</strong> If you continue saving, you’ll have
+                        ${{ number_format($financialRunway, 2) }} in 6 months 🎉
                     @endif
                 </div>
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">

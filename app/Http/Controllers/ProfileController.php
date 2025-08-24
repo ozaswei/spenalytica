@@ -142,17 +142,29 @@ class ProfileController extends Controller
         $latestMonth = $monthlyDatas->last();
         $spendingHealth = 'Healthy';
 
-        if ($latestMonth->expense > $latestMonth->income * 0.9) {
-            $spendingHealth = 'Unhealthy';
+        if ($latestMonth->expense > $latestMonth->income) {
+            $spendingHealth = 'Critical – You spent more than you earned ❌';
+        } elseif ($latestMonth->expense > $latestMonth->income * 0.9) {
+            $spendingHealth = 'Unhealthy – Spending too close to income ⚠️';
         } elseif ($latestMonth->expense > $latestMonth->income * 0.7) {
-            $spendingHealth = 'Neutral';
+            $spendingHealth = 'Neutral – Manageable but watch spending';
+        } else {
+            $spendingHealth = 'Healthy – Great savings 💚';
         }
 
-        // Time until broke
+
+        // Time until broke or financial runway
         $monthsUntilBroke = null;
+        $financialRunway = null;
+
         if ($avgSavings < 0) {
+            // User is burning money
             $monthsUntilBroke = floor($currentBalance / abs($avgSavings));
+        } elseif ($avgSavings > 0) {
+            // User is saving money
+            $financialRunway = $currentBalance + ($avgSavings * 6); // 6-month projection
         }
+
 
         return view('spenalytica.homePage', compact(
             'categories',
@@ -162,6 +174,7 @@ class ProfileController extends Controller
             'monthlyDatas',
             'spendingHealth',
             'monthsUntilBroke',
+            'financialRunway',
             'currentBalance',
             'avgSavings'
         ));
