@@ -263,18 +263,127 @@
             </div>
 
             <div id="overview" class="tab-content active">
-                <div class="alert alert-info">
-                    <strong>Spending Health:</strong> {{ $spendingHealth }} <br>
-                    <strong>Current Balance:</strong> ${{ number_format($currentBalance, 2) }} <br>
-                    <strong>Average Monthly Savings:</strong> ${{ number_format($avgSavings, 2) }} <br>
+                <!-- Health Snapshot card (place in the overview tab) -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">Health Snapshot</h5>
+                                <p class="mb-2 text-muted small">Quick financial health summary using your latest month and
+                                    averages.</p>
 
-                    @if ($monthsUntilBroke)
-                        <strong>Warning:</strong> At this rate, you’ll run out of money in {{ $monthsUntilBroke }} months ⚠️
-                    @elseif ($financialRunway)
-                        <strong>Good News:</strong> If you continue saving, you’ll have
-                        ${{ number_format($financialRunway, 2) }} in 6 months 🎉
-                    @endif
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div>
+                                        <strong>Net balance</strong>
+                                        <div>${{ number_format($currentBalance, 2) }}</div>
+                                    </div>
+
+                                    <div>
+                                        <strong>Avg monthly Δ</strong>
+                                        <div>
+                                            @if ($avgSavings === null)
+                                                -
+                                            @else
+                                                ${{ number_format($avgSavings, 2) }}
+                                                <small class="text-muted">/ month</small>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <strong>Latest health</strong>
+                                        <div>
+                                            @php
+                                                $badgeColor = match ($spendingHealth) {
+                                                    'Healthy' => 'success',
+                                                    'Neutral' => 'secondary',
+                                                    'At Risk' => 'warning',
+                                                    'Unhealthy' => 'danger',
+                                                    'Critical' => 'dark',
+                                                    default => 'light',
+                                                };
+                                            @endphp
+                                            <span
+                                                class="badge bg-{{ $badgeColor }} text-dark">{{ $spendingHealth }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <strong>Months until broke</strong>
+                                        <div>
+                                            @if (is_null($monthsUntilBroke))
+                                                <span class="text-muted">Not projected</span>
+                                            @else
+                                                <strong>{{ $monthsUntilBroke }}</strong>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="min-width:260px; max-width:360px;">
+                                <div class="mb-2">
+                                    <label class="form-label mb-1">Savings Goal</label>
+                                    @if ($savingsGoal)
+                                        @php
+                                            $progress =
+                                                $currentBalance > 0
+                                                    ? min(100, round(($currentBalance / $savingsGoal) * 100))
+                                                    : 0;
+                                        @endphp
+                                        <div class="progress" style="height:18px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                style="width: {{ $progress }}%;" aria-valuenow="{{ $progress }}"
+                                                aria-valuemin="0" aria-valuemax="100">
+                                                {{ $progress }}%
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 small text-muted">Goal: ${{ number_format($savingsGoal, 2) }} ·
+                                            You:
+                                            ${{ number_format($currentBalance, 2) }}</div>
+                                    @else
+                                        <div class="small text-muted mb-2">No savings goal set.</div>
+                                    @endif
+
+                                    <!-- Set Goal button -->
+                                    <button class="btn btn-outline-light btn-sm mt-2" data-bs-toggle="modal"
+                                        data-bs-target="#setGoalModal">
+                                        {{ $savingsGoal ? 'Update Savings Goal' : 'Set Savings Goal' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Set Savings Goal Modal -->
+                <div class="modal fade" id="setGoalModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-sm modal-dialog-centered">
+                        <div class="modal-content bg-light text-dark">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Set Savings Goal</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <form method="POST" action="{{ route('setSavingsGoal') }}">
+                                @csrf
+                                <div class="modal-body">
+                                    <label for="goalInput" class="form-label">Goal amount (CAD)</label>
+                                    <input id="goalInput" name="goal" type="number" step="0.01" min="1"
+                                        class="form-control" required value="{{ old('goal', $savingsGoal ?? '') }}">
+                                    <div class="form-text">We store this in your session (you can change later). Persist to
+                                        DB if you want permanent storage.</div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">Save Goal</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
 
                 <div class="row">
                     <div class="col-md-6">
@@ -371,7 +480,8 @@
                         All Expenses Added
                         <div class="mb-3">
                             <label for="expenseMonthFilter">Filter Expenses by Month:</label>
-                            <input type="month" id="expenseMonthFilter" name="expenseMonthFilter" class="form-control">
+                            <input type="month" id="expenseMonthFilter" name="expenseMonthFilter"
+                                class="form-control">
                         </div>
                     </div>
                     <div class="card-body">
@@ -422,7 +532,8 @@
                                                     <!-- delete button -->
                                                     <form action="{{ route('deleteExpense') }}" method="POST">
                                                         @csrf
-                                                        <input type="hidden" value="{{ $expense->id }}" name="expenseId">
+                                                        <input type="hidden" value="{{ $expense->id }}"
+                                                            name="expenseId">
                                                         <button type="submit" class="btn btn-danger">Delete</button>
                                                     </form>
                                                 </div>
@@ -903,6 +1014,12 @@
                     document.getElementById('categoryId').value = categoryId;
                 });
             });
+
+            //validation error for set goals
+            @if ($errors->any() && session('activeModal') == 'setGoal')
+                var modal = new bootstrap.Modal(document.getElementById('setGoalModal'));
+                modal.show();
+            @endif
 
             //when there is validation error at category modal
             @if ($errors->any() && session('editCategoryId'))

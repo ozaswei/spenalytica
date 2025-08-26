@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/addCategory', [CategoryController::class, 'addCategory'])->name('addCategory');
     Route::post('/editCategory', [CategoryController::class, 'editCategory'])->name('editCategory');
     Route::post('/deleteCategory', [CategoryController::class, 'deleteCategory'])->name('deleteCategory');
+    // savings goal setter (POST)
+    Route::post('/set-savings-goal', [App\Http\Controllers\ProfileController::class, 'setSavingsGoal'])->name('setSavingsGoal');
 });
 
 require __DIR__ . '/auth.php';
