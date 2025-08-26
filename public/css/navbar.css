@@ -1,16 +1,56 @@
 .navbar {
+    display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 1.6rem 2.2rem;
+    min-height: 90px;
+    /* Bigger overall height */
+    background: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: padding 0.3s, min-height 0.3s;
 }
+
+.navbar-logo {
+    max-width: 190px;
+    /* Larger logo */
+    width: 100%;
+    height: auto;
+    margin-bottom: 0.7rem;
+    transition: max-width 0.3s;
+}
+
+.navbar-left,
+.navbar-right {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
 @media (min-width: 768px) {
     .navbar {
         flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 4rem;
+        min-height: 110px;
+        /* Even taller on desktop */
     }
+
+    .navbar-logo {
+        max-width: 220px;
+        /* Even bigger logo on desktop */
+        margin-bottom: 0;
+    }
+
     .navbar-left,
     .navbar-right {
         margin-bottom: 0 !important;
     }
 }
-.navbar-logo {
-    max-width: 140px;
-    height: auto;
+
+/* Optional: Make navbar items bigger too */
+.navbar a,
+.navbar .nav-link {
+    font-size: 1.1rem;
+    padding: 0.9rem 1.4rem;
 }
