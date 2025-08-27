@@ -259,6 +259,31 @@
     font-size: 0.92rem;
     }
     }
+    /* Budget card tweaks */
+    #budgetTable .progress {
+    background-color: rgba(255,255,255,0.12);
+    }
+    #budgetTable .progress-bar {
+    background-image: linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+    color: #000;
+    font-size: 12px;
+    line-height: 14px;
+    }
+
+    /* Make modals slightly brighter for content clarity */
+    .modal-content.bg-light.text-dark {
+    background: #f8f9fa;
+    color: #111;
+    }
+
+    /* Small responsive tweak */
+    @media (max-width: 576px) {
+    #budgetTable td, #budgetTable th {
+    font-size: 13px;
+    padding: .4rem .6rem;
+    }
+    .progress { height:12px; }
+    }
 @endsection
 
 @section('mainContent')
@@ -270,6 +295,7 @@
                 <button class="tab-link active" data-target="overview">Overview</button>
                 <button class="tab-link" data-target="addExpense">Add Expense</button>
                 <button class="tab-link" data-target="addIncome">Add Income</button>
+                <button class="tab-link" data-target="budget">Budgets</button>
                 <button class="tab-link" data-target="category">Categories</button>
             </div>
 
@@ -664,6 +690,68 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Budget Tab -->
+            <div id="budget" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        Set Monthly Budgets
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('budgets.store') }}">
+                            @csrf
+                            <div class="row">
+                                @foreach ($categories as $category)
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ $category->category }}</label>
+                                        <input type="number" name="budgets[{{ $category->id }}]" class="form-control"
+                                            placeholder="Set budget for {{ $category->category }}"
+                                            value="{{ old('budgets.' . $category->id, $category->budget ?? '') }}">
+                                    </div>
+                                @endforeach
+                            </div>
+                            <button type="submit" class="btn btn-success">Save Budgets</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        Budget Overview
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach ($categories as $category)
+                                @php
+                                    $spent = $expenses
+                                        ->where('categoryId', $category->id)
+                                        ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                                        ->sum('cost');
+                                    $budget = $category->budget ?? 0;
+                                    $progress = $budget > 0 ? min(100, round(($spent / $budget) * 100)) : 0;
+                                    $barColor =
+                                        $progress < 75 ? 'bg-success' : ($progress < 100 ? 'bg-warning' : 'bg-danger');
+                                @endphp
+                                <div class="col-md-6 mb-3">
+                                    <h6>{{ $category->category }}</h6>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {{ $barColor }}" role="progressbar"
+                                            style="width: {{ $progress }}%;" aria-valuenow="{{ $progress }}"
+                                            aria-valuemin="0" aria-valuemax="100">
+                                            {{ $progress }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Spent: ${{ number_format($spent, 2) }} /
+                                        Budget: ${{ number_format($budget, 2) }}
+                                    </small>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Category Tab -->
             <div id="category" class="tab-content">
@@ -1121,6 +1209,56 @@
                     document.getElementById('subNo').checked = subValue === "0";
                 }
             @endif
+
+
+            // DataTable init for budgets if table exists
+            if (document.getElementById('budgetTable')) {
+                $('#budgetTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    lengthChange: false,
+                    autoWidth: false
+                });
+            }
+
+            // Edit budget button handler
+            document.querySelectorAll('.editBudgetBtn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tr = this.closest('tr');
+                    const id = tr.dataset.id;
+                    const categoryId = tr.dataset.category || '';
+                    const amount = tr.dataset.amount || '';
+                    const period = tr.dataset.period || 'monthly';
+                    const start = tr.dataset.start || '';
+                    const active = tr.dataset.active === '1' || tr.dataset.active === 'true';
+
+                    // set values
+                    document.getElementById('editAmountInput').value = amount;
+                    document.getElementById('editStartDate').value = start;
+                    document.getElementById('editPeriodSelect').value = period;
+                    document.getElementById('editCategorySelect').value = categoryId;
+                    document.getElementById('editActive').checked = active;
+                    document.getElementById('editBudgetId').value = id;
+
+                    // set form action
+                    const form = document.getElementById('editBudgetForm');
+                    form.action = `/budgets/${id}`;
+                });
+            });
+
+            // When edit modal submitted, ensure the checkbox value is passed (because unchecked checkbox isn't sent).
+            document.getElementById('editBudgetForm')?.addEventListener('submit', function(e) {
+                // create a hidden input for active if checked, or set 0
+                let activeInput = this.querySelector('input[name="active"][type="hidden"]');
+                if (!activeInput) {
+                    activeInput = document.createElement('input');
+                    activeInput.type = 'hidden';
+                    activeInput.name = 'active';
+                    this.appendChild(activeInput);
+                }
+                activeInput.value = document.getElementById('editActive').checked ? 1 : 0;
+            });
+
 
             //Chart JS
             // Convert Laravel data to JS

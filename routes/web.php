@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\BudgetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,6 +31,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/deleteCategory', [CategoryController::class, 'deleteCategory'])->name('deleteCategory');
     // savings goal setter (POST)
     Route::post('/set-savings-goal', [App\Http\Controllers\ProfileController::class, 'setSavingsGoal'])->name('setSavingsGoal');
+    //budgets
+    Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+    Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+    Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
 });
 
 require __DIR__ . '/auth.php';
