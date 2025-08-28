@@ -35,6 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
     Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
     Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+
+    //forcast data
+    Route::get('/forecast-data', [ProfileController::class, 'getForecastData'])->name('forecast.data');
+
 });
 
 require __DIR__ . '/auth.php';

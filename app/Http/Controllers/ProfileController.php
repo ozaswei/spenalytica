@@ -338,4 +338,38 @@ class ProfileController extends Controller
 
         return Redirect::back()->with('status', 'savings-goal-set');
     }
+
+    public function getForecastData()
+    {
+        $userId = Auth::id();
+
+        // Total income and expense for the last 6 months
+        $totalIncome = DB::table('incomes')
+            ->where('userId', $userId)
+            ->sum('revenue');
+
+        $totalExpense = DB::table('expenses')
+            ->where('userId', $userId)
+            ->sum('cost');
+
+        $currentBalance = $totalIncome - $totalExpense;
+
+        // Average monthly savings (income - expenses) over last 6 months
+        $avgMonthlySavings = ($currentBalance / 6);
+
+        $forecast = [];
+        $months = [];
+
+        for ($i = 1; $i <= 6; $i++) {
+            $months[] = now()->addMonths($i)->format('M Y');
+            $forecast[] = $currentBalance + ($avgMonthlySavings * $i);
+        }
+
+        return response()->json([
+            'months' => $months,
+            'forecast' => $forecast,
+            'currentBalance' => $currentBalance,
+            'avgMonthlySavings' => $avgMonthlySavings
+        ]);
+    }
 }

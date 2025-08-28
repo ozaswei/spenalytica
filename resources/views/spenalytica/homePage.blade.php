@@ -470,6 +470,12 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="col-md-12 mt-4">
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Cashflow Forecast (Next 6 Months)</h4>
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -1386,6 +1392,35 @@
                     }
                 });
             }
+
+            //line chart 2
+            $.get("{{ route('forecast.data') }}", function(data) {
+                new Chart(document.getElementById('forecastChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: 'Projected Balance',
+                            data: data.forecast,
+                            borderColor: '#4BC0C0',
+                            backgroundColor: 'rgba(75,192,192,0.2)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                });
+            });
 
             // Create charts
             createDoughnutChart('monthlyExpenseChart', monthlyDatas, 'Expenses by Category');
