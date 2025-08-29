@@ -712,7 +712,7 @@
                                         <label class="form-label">{{ $category->category }}</label>
                                         <input type="number" name="budgets[{{ $category->id }}]" class="form-control"
                                             placeholder="Set budget for {{ $category->category }}"
-                                            value="{{ old('budgets.' . $category->id, $category->budget ?? '') }}">
+                                            value="{{ old('budgets.' . $category->id, $category->budget ?? 0) }}">
                                     </div>
                                 @endforeach
                             </div>
@@ -729,6 +729,7 @@
                         <div class="row">
                             @foreach ($categories as $category)
                                 @php
+                                    // Calculate spent this month
                                     $spent = $expenses
                                         ->where('categoryId', $category->id)
                                         ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
@@ -757,6 +758,28 @@
                     </div>
                 </div>
             </div>
+
+            {{-- <!-- Tab Navigation (example) -->
+            <div class="tab-nav">
+                <button class="tab-link {{ $activeTab == 'overview' ? 'active' : '' }}"
+                    data-tab="overview">Overview</button>
+                <button class="tab-link {{ $activeTab == 'budget' ? 'active' : '' }}" data-tab="budget">Budget</button>
+            </div> --}}
+
+            <!-- Tab JS -->
+            <script>
+                document.querySelectorAll('.tab-link').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const tab = this.getAttribute('data-tab');
+                        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                        document.querySelector('#' + tab).classList.add('active');
+
+                        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            </script>
+
 
 
             <!-- Category Tab -->

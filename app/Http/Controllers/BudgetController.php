@@ -12,34 +12,44 @@ class BudgetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'categoryId' => ['nullable','exists:categories,id'],
-            'amount' => ['required','numeric','min:0.01'],
-            'period' => ['required','in:monthly,weekly'],
-            'start_date' => ['nullable','date'],
+            'budgets' => ['required', 'array'],
+            'budgets.*' => ['nullable', 'numeric', 'min:0.01'],
         ]);
 
-        Budget::create([
-            'userId' => Auth::id(),
-            'categoryId' => $request->input('categoryId'),
-            'amount' => $request->input('amount'),
-            'period' => $request->input('period'),
-            'start_date' => $request->input('start_date') ?: now()->toDateString(),
-            'active' => true,
-        ]);
+        $period = 'monthly'; // default period
+        $start_date = now()->toDateString();
 
-        return Redirect::back()->with('status', 'budget-created');
+        foreach ($request->input('budgets') as $categoryId => $amount) {
+            if ($amount === null || $amount <= 0) continue;
+
+            \App\Models\Budget::updateOrCreate(
+                [
+                    'userId' => Auth::id(),
+                    'categoryId' => $categoryId,
+                ],
+                [
+                    'amount' => $amount,
+                    'period' => $period,
+                    'start_date' => $start_date,
+                    'active' => true,
+                ]
+            );
+        }
+
+        return redirect()->back()->with(['success', 'Budget Added Successfully.', 'activeTab' => 'budget']);
     }
+
 
     public function update(Request $request, Budget $budget)
     {
         // $this->authorize('update', $budget); // optional gate if set
 
         $request->validate([
-            'categoryId' => ['nullable','exists:categories,id'],
-            'amount' => ['required','numeric','min:0.01'],
-            'period' => ['required','in:monthly,weekly'],
-            'start_date' => ['nullable','date'],
-            'active' => ['nullable','boolean'],
+            'categoryId' => ['nullable', 'exists:categories,id'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'period' => ['required', 'in:monthly,weekly'],
+            'start_date' => ['nullable', 'date'],
+            'active' => ['nullable', 'boolean'],
         ]);
 
         $budget->update([
