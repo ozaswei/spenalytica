@@ -421,7 +421,7 @@
                     </div>
                 </div>
 
-
+                <!-- Charts and Highest Expense Table -->
                 <div class="row">
                     <div class="col-md-6">
                         <div class="chart-container">
@@ -470,14 +470,31 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="col-md-12 mt-4">
+                    <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
                             <h4 class="text-center">Cashflow Forecast (Next 6 Months)</h4>
                             <canvas id="forecastChart"></canvas>
                         </div>
                     </div>
+                    <div class="col-md-6 mt-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Pie Chart for Category Wise Expenses -->
+                                <h6>Expenses by Category</h6>
+                                <canvas id="expensesPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 ">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Line Chart for Income vs Expenses -->
+                                    <h6>Monthly Income vs Expenses</h6>
+                                    <canvas id="incomeExpenseChart"></canvas>
+                                </div>
+                        </div>
+                    </div>
                 </div>
-
             </div>
 
             <!-- Expense Tab -->
@@ -766,22 +783,6 @@
                 <button class="tab-link {{ $activeTab == 'budget' ? 'active' : '' }}" data-tab="budget">Budget</button>
             </div> --}}
 
-            <!-- Tab JS -->
-            <script>
-                document.querySelectorAll('.tab-link').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        const tab = this.getAttribute('data-tab');
-                        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                        document.querySelector('#' + tab).classList.add('active');
-
-                        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-                        this.classList.add('active');
-                    });
-                });
-            </script>
-
-
-
             <!-- Category Tab -->
             <div id="category" class="tab-content">
                 <div class="card">
@@ -1038,6 +1039,14 @@
 @endsection
 
 @section('customJavascript')
+    @php
+        $expenseData = $categories->map(function ($cat) use ($expenses) {
+            return $expenses
+                ->where('categoryId', $cat->id)
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('cost');
+        });
+    @endphp
     <script>
         //data table
         $(document).ready(function() {
@@ -1048,6 +1057,18 @@
                 order: [
                     [2, 'desc']
                 ]
+            });
+        });
+
+        //Tab JS
+        document.querySelectorAll('.tab-link').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const tab = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                document.querySelector('#' + tab).classList.add('active');
+
+                document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
             });
         });
 
@@ -1443,6 +1464,46 @@
                         }
                     }
                 });
+            });
+
+            // Pie Chart: Expenses by Category
+            const ctxPie = document.getElementById('expensesPieChart');
+            new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: @json($categories->pluck('category')),
+                    datasets: [{
+                        label: 'Expenses',
+                        data: @json($expenseData),
+                        backgroundColor: [
+                            '#ff6384', '#36a2eb', '#ffce56',
+                            '#4bc0c0', '#9966ff', '#ff9f40'
+                        ]
+                    }]
+                }
+            });
+
+
+            // Line Chart: Income vs Expenses (by month)
+            const ctxLine = document.getElementById('incomeExpenseChart');
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: @json($months), // pass from controller
+                    datasets: [{
+                            label: 'Income',
+                            data: @json($monthlyIncome),
+                            borderColor: 'green',
+                            fill: false
+                        },
+                        {
+                            label: 'Expenses',
+                            data: @json($monthlyExpenses),
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                }
             });
 
             // Create charts

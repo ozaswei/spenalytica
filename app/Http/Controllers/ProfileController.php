@@ -69,6 +69,8 @@ class ProfileController extends Controller
         $currentDate = \Carbon\Carbon::now();
         $currentYear = $currentDate->year;
         $currentMonth = $currentDate->month;
+        //all months
+        $months = collect(range(1, 12))->map(fn($m) => date('M', mktime(0, 0, 0, $m, 1)));
 
         // --- load data
         $categories = Category::where('userId', $userId)->get();
@@ -145,6 +147,18 @@ class ProfileController extends Controller
 
         $savingsGoal = session('savingsGoal', null);
 
+
+
+        $monthlyIncome = collect(range(1, 12))->map(
+            fn($m) =>
+            $incomes->whereBetween('created_at', [now()->month($m)->startOfMonth(), now()->month($m)->endOfMonth()])->sum('amount')
+        );
+
+        $monthlyExpenses = collect(range(1, 12))->map(
+            fn($m) =>
+            $expenses->whereBetween('created_at', [now()->month($m)->startOfMonth(), now()->month($m)->endOfMonth()])->sum('cost')
+        );
+
         return view('spenalytica.homePage', compact(
             'categories',
             'expenses',
@@ -156,7 +170,7 @@ class ProfileController extends Controller
             'currentBalance',
             'avgSavings',
             'savingsGoal',
-            'budgets'
+            'budgets','monthlyIncome','monthlyExpenses','months'
         )); // ensure Budget tab stays active
     }
 
