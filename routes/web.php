@@ -38,7 +38,6 @@ Route::middleware('auth')->group(function () {
 
     //forcast data
     Route::get('/forecast-data', [ProfileController::class, 'getForecastData'])->name('forecast.data');
-
 });
 
 require __DIR__ . '/auth.php';

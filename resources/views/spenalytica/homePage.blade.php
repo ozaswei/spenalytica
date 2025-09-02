@@ -284,6 +284,8 @@
     }
     .progress { height:12px; }
     }
+
+    .chart-container canvas { display: block; } /* avoid baseline gap */
 @endsection
 
 @section('mainContent')
@@ -444,11 +446,9 @@
                                 <tr>
                                     <th>Expense</th>
                                     <th>Category</th>
-
                                     <th>Cost</th>
                                     <th>Added at</th>
                                     <th>Updated at</th>
-
                                 </tr>
                             </thead>
                             <tbody>
@@ -473,7 +473,9 @@
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
                             <h4 class="text-center">Cashflow Forecast (Next 6 Months)</h4>
-                            <canvas id="forecastChart"></canvas>
+                            <div class="chart-container">
+                                <canvas id="forecastChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6 mt-4">
@@ -481,7 +483,9 @@
                             <div class="card-body">
                                 <!-- Pie Chart for Category Wise Expenses -->
                                 <h6>Expenses by Category</h6>
-                                <canvas id="expensesPieChart"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="expensesPieChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -489,9 +493,11 @@
                         <div class="card">
                             <div class="card-body">
                                 <!-- Line Chart for Income vs Expenses -->
-                                    <h6>Monthly Income vs Expenses</h6>
+                                <h6>Monthly Income vs Expenses</h6>
+                                <div class="chart-container">
                                     <canvas id="incomeExpenseChart"></canvas>
                                 </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -776,13 +782,6 @@
                 </div>
             </div>
 
-            {{-- <!-- Tab Navigation (example) -->
-            <div class="tab-nav">
-                <button class="tab-link {{ $activeTab == 'overview' ? 'active' : '' }}"
-                    data-tab="overview">Overview</button>
-                <button class="tab-link {{ $activeTab == 'budget' ? 'active' : '' }}" data-tab="budget">Budget</button>
-            </div> --}}
-
             <!-- Category Tab -->
             <div id="category" class="tab-content">
                 <div class="card">
@@ -858,8 +857,9 @@
                     </div>
                 </div>
             </div>
+
             <!-- Edit Category Modal -->
-            <div class="modal fade" id="editCategoryModal" tabindex="-9" aria-hidden="true">
+            <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -894,7 +894,8 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Save changes</button>
+                            <!-- FIX: button submits the form -->
+                            <button type="submit" class="btn btn-primary" form="editCategoryForm">Save changes</button>
                         </div>
                     </div>
                 </div>
@@ -1033,484 +1034,349 @@
                 </div>
             </div>
 
-
-
+        </div> <!-- /.tab-container -->
     </main>
 @endsection
 
 @section('customJavascript')
     @php
-        $expenseData = $categories->map(function ($cat) use ($expenses) {
+        // Current-month per-category expenses
+        $expenseDataMonth = $categories->map(function ($cat) use ($expenses) {
             return $expenses
                 ->where('categoryId', $cat->id)
                 ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('cost');
         });
+
+        // All-time per-category expenses (fallback if month is all zeros)
+        $expenseDataAll = $categories->map(function ($cat) use ($expenses) {
+            return $expenses->where('categoryId', $cat->id)->sum('cost');
+        });
     @endphp
+
     <script>
-        //data table
-        $(document).ready(function() {
-            $('#expenseTable').DataTable();
-            $('#incomeTable').DataTable();
-            $('#categoryTable').DataTable();
-            $('#highestExpense').DataTable({
-                order: [
-                    [2, 'desc']
-                ]
-            });
-        });
-
-        //Tab JS
-        document.querySelectorAll('.tab-link').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const tab = this.getAttribute('data-tab');
-                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                document.querySelector('#' + tab).classList.add('active');
-
-                document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        //default datatable value 
         document.addEventListener("DOMContentLoaded", () => {
+            // ---- DataTables ----
+            if (window.jQuery && $.fn.DataTable) {
+                $('#expenseTable').DataTable();
+                $('#incomeTable').DataTable();
+                $('#categoryTable').DataTable();
+                $('#highestExpense').DataTable({ order: [[2,'desc']] });
+                if ($('#budgetTable').length){
+                    $('#budgetTable').DataTable({ responsive:true, pageLength:10, lengthChange:false, autoWidth:false });
+                }
+            }
 
-            //tab link javascript
+            // ---- Tabs ----
             const tabLinks = document.querySelectorAll(".tab-link");
             const tabContents = document.querySelectorAll(".tab-content");
 
+            let overviewRendered = false;
             tabLinks.forEach(link => {
                 link.addEventListener("click", () => {
-                    tabLinks.forEach(item => item.classList.remove("active"));
-                    tabContents.forEach(item => item.classList.remove("active"));
-
+                    tabLinks.forEach(l => l.classList.remove("active"));
+                    tabContents.forEach(c => c.classList.remove("active"));
                     link.classList.add("active");
-                    const target = link.getAttribute("data-target");
-                    document.getElementById(target).classList.add("active");
+                    document.getElementById(link.dataset.target).classList.add("active");
+                    if (link.dataset.target === 'overview' && !overviewRendered) {
+                        renderOverviewCharts();
+                        overviewRendered = true;
+                    }
                 });
             });
 
-            //when validation get success or failed , stay on the same tab 
-            let activeTab = "{{ session('activeTab', 'overview') }}"; // default to overview
-            document.querySelectorAll(".tab-link").forEach(link => {
-                link.classList.remove("active");
-                if (link.getAttribute("data-target") === activeTab) {
-                    link.classList.add("active");
-                }
-            });
-            document.querySelectorAll(".tab-content").forEach(content => {
-                content.classList.remove("active");
-                if (content.id === activeTab) {
-                    content.classList.add("active");
-                }
-            });
+            let activeTab = "{{ session('activeTab', 'overview') }}";
+            tabLinks.forEach(l => l.classList.toggle('active', l.dataset.target === activeTab));
+            tabContents.forEach(c => c.classList.toggle('active', c.id === activeTab));
 
-            // Set current month as default value YYYY-MM
-            function setCurrentMonthInput(id) {
+            // ---- Month filter defaults ----
+            const setCurrentMonthInput = (id) => {
                 const input = document.getElementById(id);
-                if (input) {
-                    const now = new Date();
-                    const month = now.getMonth() + 1; // getMonth() is 0-based
-                    const monthString = month < 10 ? `0${month}` : month;
-                    const defaultValue = `${now.getFullYear()}-${monthString}`;
-                    input.value = defaultValue;
-                }
-            }
-
+                if (!input) return;
+                const now = new Date();
+                input.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            };
             setCurrentMonthInput('expenseMonthFilter');
             setCurrentMonthInput('incomeMonthFilter');
 
-            // TODO: Add your filtering logic here
-            // For example, filter the DataTables based on selected month
-            // You might want to listen to 'change' event on these inputs to update tables dynamically
-
-            //once the date is selected 
-            function filterByMonth(tableId, dateColumnIndex, monthValue) {
-                const year = monthValue.substring(0, 4);
-                const month = monthValue.substring(5, 7);
-
-                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                    if (settings.nTable.id !== tableId) return true;
-
-                    const dateStr = data[dateColumnIndex]; // Use the passed parameter here
-                    const date = new Date(dateStr);
-
-                    return date.getFullYear() == year && (date.getMonth() + 1) == parseInt(month);
+            function filterByMonth(tableId, colIndex, monthValue){
+                const year = monthValue.substring(0,4);
+                const month = monthValue.substring(5,7);
+                if (!window.jQuery || !$.fn.dataTable) return;
+                $.fn.dataTable.ext.search.push((settings,data) => {
+                    if(settings.nTable.id !== tableId) return true;
+                    const d = new Date(data[colIndex]);
+                    return d.getFullYear() == year && (d.getMonth()+1) == parseInt(month);
                 });
-
                 $(`#${tableId}`).DataTable().draw();
-
                 $.fn.dataTable.ext.search.pop();
             }
+            document.getElementById('expenseMonthFilter')?.addEventListener('change', e => filterByMonth('expenseTable',4,e.target.value));
+            document.getElementById('incomeMonthFilter')?.addEventListener('change', e => filterByMonth('incomeTable',3,e.target.value));
 
-            document.getElementById('expenseMonthFilter').addEventListener('change', function() {
-                filterByMonth('expenseTable', 4, this.value);
-            });
+            // ---- Edit modals ----
+            const setupEditModal = (btnSelector, formFields, rowAttrPrefix) => {
+                document.querySelectorAll(btnSelector).forEach(btn => {
+                    btn.addEventListener('click', function(){
+                        const row = this.closest('tr');
+                        for (const [fieldId, attrName] of Object.entries(formFields)) {
+                            const el = document.getElementById(fieldId);
+                            if (el && row) el.value = row.getAttribute(`${rowAttrPrefix}-${attrName}`) ?? '';
+                        }
+                    });
+                });
+            };
+            setupEditModal('.editCategoryBtn', {categoryName:'name', categoryDescription:'description', categoryId:'id'}, 'cat');
+            setupEditModal('.editExpenseBtn', {expenseId:'id', expenseName:'name', expenseCategory:'category', expenseCost:'cost', expenseDescription:'description'}, 'e');
 
-            document.getElementById('incomeMonthFilter').addEventListener('change', function() {
-                filterByMonth('incomeTable', 3, this.value);
-            });
+            // Income modal reads from data-* on the button
+            document.querySelectorAll('.editIncomeBtn').forEach(btn => {
+                btn.addEventListener('click', function(){
+                    const ds = this.dataset;
+                    const idEl = document.getElementById('incomeId');
+                    const labelEl = document.getElementById('editLabel');
+                    const catEl = document.getElementById('editCategoryId');
+                    const revEl = document.getElementById('editRevenue');
+                    const descEl = document.getElementById('editDescription');
+                    const mrrYes = document.getElementById('editMrrYes');
+                    const mrrNo  = document.getElementById('editMrrNo');
 
-            //edit Category model 
-            document.querySelectorAll('.editCategoryBtn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const row = this.closest('tr');
-                    const categoryId = row.getAttribute('cat-id');
-                    const categoryName = row.getAttribute('cat-name');
-                    const categoryDescription = row.getAttribute('cat-description');
-                    document.getElementById('categoryName').value = categoryName;
-                    document.getElementById('categoryDescription').value = categoryDescription;
-                    document.getElementById('categoryId').value = categoryId;
+                    if (idEl) idEl.value = ds.id ?? '';
+                    if (labelEl) labelEl.value = ds.label ?? '';
+                    if (catEl) catEl.value = ds.category ?? '';
+                    if (revEl) revEl.value = ds.revenue ?? '';
+                    if (descEl) descEl.value = ds.description ?? '';
+
+                    if (typeof ds.mrr !== 'undefined') {
+                        if (String(ds.mrr) === '1') { mrrYes.checked = true; mrrNo.checked = false; }
+                        else { mrrYes.checked = false; mrrNo.checked = true; }
+                    }
                 });
             });
 
-            //validation error for set goals
-            @if ($errors->any() && session('activeModal') == 'setGoal')
-                var modal = new bootstrap.Modal(document.getElementById('setGoalModal'));
-                modal.show();
-            @endif
+            // ---- Chart data from PHP ----
+            const monthsShort     = @json($months);
+            const monthlyDatas    = @json($monthlyDatas);
+            const categories      = @json($categories);
+            const expenseMonthArr = @json($expenseDataMonth);
+            const expenseAllArr   = @json($expenseDataAll);
+            const monthlyIncome   = @json($monthlyIncome);
+            const monthlyExpenses = @json($monthlyExpenses);
 
-            //when there is validation error at category modal
-            @if ($errors->any() && session('editCategoryId'))
-                var editModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
-                editModal.show();
+            // Fallback data for pie
+            const hasNonZero = (arr) => Array.isArray(arr) && arr.some(v => Number(v) > 0);
+            const expenseDataForPie = hasNonZero(expenseMonthArr) ? expenseMonthArr : expenseAllArr;
 
-                // Also set the form action and inputs values again
-                const row = document.querySelector(`tr[cat-id="{{ session('editCategoryId') }}"]`);
-                if (row) {
-                    document.getElementById('categoryName').value = row.getAttribute('cat-name');
-                    document.getElementById('categoryDescription').value = row.getAttribute('cat-description');
-                }
-            @endif
-            //edit Income model
-            const editButtons = document.querySelectorAll('.editIncomeBtn');
-
-            editButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Get data attributes from the clicked button
-                    const id = this.getAttribute('data-id');
-                    const label = this.getAttribute('data-label');
-                    const category = this.getAttribute('data-category');
-                    const mrr = this.getAttribute('data-mrr');
-                    const revenue = this.getAttribute('data-revenue');
-                    const description = this.getAttribute('data-description');
-
-                    // Fill modal fields
-                    document.getElementById('incomeId').value = id;
-                    document.getElementById('editLabel').value = label;
-                    document.getElementById('editCategoryId').value = category;
-                    document.getElementById(mrr === "1" ? 'editMrrYes' : 'editMrrNo')
-                        .checked = true;
-                    document.getElementById('editRevenue').value = revenue;
-                    document.getElementById('editDescription').value = description;
-                });
-            });
-            //When there is validation error at income modal
-            @if ($errors->any() && session('editIncomeId'))
-                var editIncomeModal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
-                editIncomeModal.show();
-
-                // Set the form fields again based on the table row attributes
-                const incomeRow = document.querySelector(`tr[income-id="{{ session('editIncomeId') }}"]`);
-                if (incomeRow) {
-                    document.getElementById('incomeName').value = incomeRow.getAttribute('income-name');
-                    document.getElementById('incomeCategory').value = incomeRow.getAttribute('income-category');
-                    document.getElementById('incomeRevenue').value = incomeRow.getAttribute('income-revenue');
-                    document.getElementById('incomeDescription').value = incomeRow.getAttribute(
-                        'income-description');
-                }
-            @endif
-
-            // When clicking "Edit" on Expense
-            document.querySelectorAll('.editExpenseBtn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const row = this.closest('tr');
-
-                    document.getElementById('expenseId').value = row.getAttribute('e-id');
-                    document.getElementById('expenseName').value = row.getAttribute('e-name');
-                    document.getElementById('expenseCategory').value = row.getAttribute(
-                        'e-category');
-                    document.getElementById('expenseCost').value = row.getAttribute('e-cost');
-                    document.getElementById('expenseDescription').value = row.getAttribute(
-                        'e-description');
-
-                    // Set subscription radio
-                    const subValue = row.getAttribute('e-subscription');
-                    document.getElementById('subYes').checked = subValue === "1";
-                    document.getElementById('subNo').checked = subValue === "0";
-                });
-            });
-
-            // When validation error occurs for edit expense
-            @if ($errors->any() && session('editExpenseId'))
-                var editExpenseModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
-                editExpenseModal.show();
-
-                const expenseRow = document.querySelector(`tr[e-id="{{ session('editExpenseId') }}"]`);
-                if (expenseRow) {
-                    document.getElementById('expenseId').value = expenseRow.getAttribute('e-id');
-                    document.getElementById('expenseName').value = expenseRow.getAttribute('e-name');
-                    document.getElementById('expenseCategory').value = expenseRow.getAttribute('e-category');
-                    document.getElementById('expenseCost').value = expenseRow.getAttribute('e-cost');
-                    document.getElementById('expenseDescription').value = expenseRow.getAttribute('e-description');
-
-                    const subValue = expenseRow.getAttribute('e-subscription');
-                    document.getElementById('subYes').checked = subValue === "1";
-                    document.getElementById('subNo').checked = subValue === "0";
-                }
-            @endif
-
-
-            // DataTable init for budgets if table exists
-            if (document.getElementById('budgetTable')) {
-                $('#budgetTable').DataTable({
-                    responsive: true,
-                    pageLength: 10,
-                    lengthChange: false,
-                    autoWidth: false
-                });
+            // Chart.js defaults
+            if (window.Chart) {
+                Chart.defaults.color = '#ffffff';
+                Chart.defaults.font.size = 12;
+                Chart.defaults.plugins.legend.labels.boxWidth = 14;
+                Chart.defaults.plugins.legend.labels.boxHeight = 14;
+                Chart.defaults.elements.point.radius = 3;
+                Chart.defaults.elements.point.hoverRadius = 5;
             }
 
-            // Edit budget button handler
-            document.querySelectorAll('.editBudgetBtn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const tr = this.closest('tr');
-                    const id = tr.dataset.id;
-                    const categoryId = tr.dataset.category || '';
-                    const amount = tr.dataset.amount || '';
-                    const period = tr.dataset.period || 'monthly';
-                    const start = tr.dataset.start || '';
-                    const active = tr.dataset.active === '1' || tr.dataset.active === 'true';
+            const $id = (x) => document.getElementById(x);
 
-                    // set values
-                    document.getElementById('editAmountInput').value = amount;
-                    document.getElementById('editStartDate').value = start;
-                    document.getElementById('editPeriodSelect').value = period;
-                    document.getElementById('editCategorySelect').value = categoryId;
-                    document.getElementById('editActive').checked = active;
-                    document.getElementById('editBudgetId').value = id;
+            // Registry to ensure single instance per canvas
+            window.__charts = window.__charts || {};
 
-                    // set form action
-                    const form = document.getElementById('editBudgetForm');
-                    form.action = `/budgets/${id}`;
-                });
-            });
-
-            // When edit modal submitted, ensure the checkbox value is passed (because unchecked checkbox isn't sent).
-            document.getElementById('editBudgetForm')?.addEventListener('submit', function(e) {
-                // create a hidden input for active if checked, or set 0
-                let activeInput = this.querySelector('input[name="active"][type="hidden"]');
-                if (!activeInput) {
-                    activeInput = document.createElement('input');
-                    activeInput.type = 'hidden';
-                    activeInput.name = 'active';
-                    this.appendChild(activeInput);
+            const safeYScale = {
+                beginAtZero: true,
+                grid: { color: 'rgba(255,255,255,0.15)' },
+                ticks: {
+                    maxTicksLimit: 8,
+                    callback: (val) => { try { return Number(val).toLocaleString(); } catch { return val; } }
                 }
-                activeInput.value = document.getElementById('editActive').checked ? 1 : 0;
-            });
+            };
+            const safeXGrid = { grid: { color: 'rgba(255,255,255,0.15)' } };
 
+            // Ensure canvas height follows its .chart-container and stays fixed
+            function pinCanvasHeight(canvas) {
+                const parent = canvas?.parentElement;
+                if (!parent) return;
+                // Use the container's content height, not auto-expanding
+                const h = parent.clientHeight || 340;
+                canvas.style.height = h + 'px';
+                canvas.height = h; // set attribute too (stabilizes retina scaling)
+            }
 
-            //Chart JS
-            // Convert Laravel data to JS
-            var months = ["", "January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"
-            ];
-            const expenses = @json($expenses);
-            const monthlyDatas = @json($monthlyDatas);
-            const categories = @json($categories);
-            // Format expenses by category for chart
-            const expenseList = expenses.map(exp => ({
-                expense: exp.expense,
-                cost: parseFloat(exp.cost)
-            }));
-            //doughnut chart
-            function createDoughnutChart(canvasId, data, label) {
-                const ctx = document.getElementById(canvasId).getContext('2d');
-                return new Chart(ctx, {
+            function makeOrUpdateChart(key, canvasId, configBuilder) {
+                const canvas = $id(canvasId);
+                if (!canvas) return;
+
+                pinCanvasHeight(canvas);
+
+                const existing = window.__charts[key];
+                if (existing) {
+                    // Update existing chart data in-place
+                    const { data, options, type } = configBuilder();
+                    existing.config.type = type || existing.config.type;
+                    // shallow replace labels & datasets (same shape expected)
+                    existing.data.labels = data.labels;
+                    existing.data.datasets = data.datasets;
+                    // merge options we care about
+                    existing.options.scales = options.scales || existing.options.scales;
+                    existing.options.plugins = options.plugins || existing.options.plugins;
+                    existing.update();
+                    return existing;
+                } else {
+                    const cfg = configBuilder();
+                    const chart = new Chart(canvas.getContext('2d'), {
+                        type: cfg.type,
+                        data: cfg.data,
+                        options: Object.assign({
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            resizeDelay: 100
+                        }, cfg.options || {})
+                    });
+                    window.__charts[key] = chart;
+                    return chart;
+                }
+            }
+
+            function renderOverviewCharts(){
+                // labels
+                const labelsFromMonthly = monthlyDatas.map(d => monthsShort[(d.month ?? 0)-1] ?? '');
+
+                // 1) Monthly Expenses Doughnut
+                makeOrUpdateChart('monthlyExpenseChart','monthlyExpenseChart', () => ({
                     type: 'doughnut',
                     data: {
-                        labels: monthlyDatas.map(e => months[e.month]),
+                        labels: labelsFromMonthly,
                         datasets: [{
-                            label: "Total Spendings",
-                            data: monthlyDatas.map(e => e.expense),
-                            backgroundColor: [
-                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
-                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#fff'
+                            label: 'Total Spendings',
+                            data: monthlyDatas.map(d => d.expense),
+                            backgroundColor: ['#FF6B6B','#4FC3F7','#FFD166','#6EE7B7','#A78BFA','#26C6DA','#FCA5A5','#F59E0B'],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: '#333',
-                                    font: {
-                                        size: 14
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                enabled: true
-                            }
-                        }
-                    }
-                });
-            }
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                }));
 
-            //bar chart
-            function createBarChart(canvasId, data, label) {
-                const bctx = document.getElementById(canvasId).getContext('2d');
-                return new Chart(bctx, {
+                // 2) Monthly Income Bar (stable height)
+                makeOrUpdateChart('monthlyIncomeChart','monthlyIncomeChart', () => ({
                     type: 'bar',
                     data: {
-                        labels: monthlyDatas.map(e => months[e.month]),
+                        labels: labelsFromMonthly,
                         datasets: [{
                             label: 'Total Revenue',
-                            data: monthlyDatas.map(e => e.income),
-                            backgroundColor: [
-                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
-                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#fff'
+                            data: monthlyDatas.map(d => d.income),
+                            backgroundColor: '#4FC3F7',
+                            borderColor: '#ffffff',
+                            borderWidth: 1
                         }]
                     },
                     options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: '#333',
-                                    font: {
-                                        size: 14
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                enabled: true
-                            }
-                        }
+                        scales: { x: safeXGrid, y: safeYScale },
+                        plugins: { legend: { position: 'bottom' } }
                     }
-                });
-            }
+                }));
 
-            //line chart
-            function createLineChart(canvasId, data, label) {
-                const lctx = document.getElementById(canvasId).getContext('2d');
-                return new Chart(lctx, {
+                // 3) Monthly Savings Line
+                makeOrUpdateChart('monthlySavingsChart','monthlySavingsChart', () => ({
                     type: 'line',
                     data: {
-                        labels: monthlyDatas.map(e => months[e.month]),
+                        labels: labelsFromMonthly,
                         datasets: [{
                             label: 'Total Savings',
-                            data: monthlyDatas.map(e => e.savings),
-                            backgroundColor: [
-                                '#4cafef', '#ff9800', '#e91e63', '#8bc34a',
-                                '#3f51b5', '#009688', '#f44336', '#9c27b0'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    color: '#333',
-                                    font: {
-                                        size: 14
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                enabled: true
-                            }
-                        }
-                    }
-                });
-            }
-
-            //line chart 2
-            $.get("{{ route('forecast.data') }}", function(data) {
-                new Chart(document.getElementById('forecastChart'), {
-                    type: 'line',
-                    data: {
-                        labels: data.months,
-                        datasets: [{
-                            label: 'Projected Balance',
-                            data: data.forecast,
-                            borderColor: '#4BC0C0',
-                            backgroundColor: 'rgba(75,192,192,0.2)',
+                            data: monthlyDatas.map(d => d.savings),
+                            borderColor: '#FFFFFF',
+                            backgroundColor: 'rgba(255,255,255,0.15)',
                             fill: true,
                             tension: 0.3
                         }]
                     },
                     options: {
-                        responsive: true,
+                        scales: { x: safeXGrid, y: safeYScale },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                }));
+
+                // 4) Expenses by Category Pie
+                makeOrUpdateChart('expensesPieChart','expensesPieChart', () => ({
+                    type: 'pie',
+                    data: {
+                        labels: categories.map(c => c.category),
+                        datasets: [{
+                            data: expenseDataForPie,
+                            backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8DD3C7','#BC80BD','#80B1D3','#FB8072'],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
                         plugins: {
-                            legend: {
-                                display: true
-                            },
+                            legend: { position: 'top' },
                             tooltip: {
-                                enabled: true
+                                callbacks: { label: (ctx) => `${ctx.label}: ${Number(ctx.parsed || 0).toLocaleString()}` }
                             }
                         }
                     }
-                });
-            });
+                }));
 
-            // Pie Chart: Expenses by Category
-            const ctxPie = document.getElementById('expensesPieChart');
-            new Chart(ctxPie, {
-                type: 'pie',
-                data: {
-                    labels: @json($categories->pluck('category')),
-                    datasets: [{
-                        label: 'Expenses',
-                        data: @json($expenseData),
-                        backgroundColor: [
-                            '#ff6384', '#36a2eb', '#ffce56',
-                            '#4bc0c0', '#9966ff', '#ff9f40'
+                // 5) Income vs Expenses (12-month) — create once, update later if needed
+                makeOrUpdateChart('incomeExpenseChart','incomeExpenseChart', () => ({
+                    type: 'line',
+                    data: {
+                        labels: monthsShort,
+                        datasets: [
+                            { label: 'Income',   data: monthlyIncome,   borderColor: '#00E676', backgroundColor: 'rgba(0,230,118,0.15)', fill: true, tension: 0.3 },
+                            { label: 'Expenses', data: monthlyExpenses, borderColor: '#FF5252', backgroundColor: 'rgba(255,82,82,0.15)', fill: true, tension: 0.3 }
                         ]
-                    }]
+                    },
+                    options: {
+                        scales: { x: safeXGrid, y: safeYScale },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                }));
+
+                // 6) Forecast — guard against duplicate AJAX + update existing chart
+                if (window.jQuery) {
+                    // Only fetch once per page view
+                    if (!window.__forecastLoaded) {
+                        window.__forecastLoaded = true;
+                        $.get("{{ route('forecast.data') }}")
+                            .done((data) => {
+                                makeOrUpdateChart('forecastChart','forecastChart', () => ({
+                                    type: 'line',
+                                    data: {
+                                        labels: data.months,
+                                        datasets: [{
+                                            label: 'Projected Balance',
+                                            data: data.forecast,
+                                            borderColor: '#FFFFFF',
+                                            backgroundColor: 'rgba(255,255,255,0.15)',
+                                            fill: true,
+                                            tension: 0.3
+                                        }]
+                                    },
+                                    options: {
+                                        scales: { x: safeXGrid, y: safeYScale },
+                                        plugins: { legend: { display: true, position: 'top' } }
+                                    }
+                                }));
+                            })
+                            .fail(() => {
+                                const ctx = $id('forecastChart')?.getContext('2d');
+                                if (ctx) {
+                                    ctx.font = '14px sans-serif';
+                                    ctx.fillStyle = '#fff';
+                                    ctx.fillText('Unable to load forecast data.', 10, 20);
+                                }
+                            });
+                    }
                 }
-            });
+            }
 
-
-            // Line Chart: Income vs Expenses (by month)
-            const ctxLine = document.getElementById('incomeExpenseChart');
-            new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: @json($months), // pass from controller
-                    datasets: [{
-                            label: 'Income',
-                            data: @json($monthlyIncome),
-                            borderColor: 'green',
-                            fill: false
-                        },
-                        {
-                            label: 'Expenses',
-                            data: @json($monthlyExpenses),
-                            borderColor: 'red',
-                            fill: false
-                        }
-                    ]
-                }
-            });
-
-            // Create charts
-            createDoughnutChart('monthlyExpenseChart', monthlyDatas, 'Expenses by Category');
-            createBarChart('monthlyIncomeChart', monthlyDatas, 'Monthly Income');
-            createLineChart('monthlySavingsChart', monthlyDatas, 'Monthly Savings');
-
+            // Initial render if Overview tab is shown
+            if (document.getElementById('overview')?.classList.contains('active')) {
+                renderOverviewCharts();
+                overviewRendered = true;
+            }
         });
     </script>
 @endsection
