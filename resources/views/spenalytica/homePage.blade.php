@@ -338,7 +338,7 @@
                                                     'Neutral' => 'secondary',
                                                     'At Risk' => 'warning',
                                                     'Unhealthy' => 'danger',
-                                                    'Critical' => 'dark',
+                                                    'Critical' => 'danger',
                                                     default => 'light',
                                                 };
                                             @endphp
@@ -756,11 +756,11 @@
                         <div class="row">
                             @foreach ($categories as $category)
                                 @php
-                                    // Spent this month per category, using the controller's recurrence-aware totals
                                     $spent = (float) ($spentByCategoryThisMonth[$category->id] ?? 0);
                                     $budget = (float) ($category->budget ?? 0);
                                     $progress = $budget > 0 ? min(100, round(($spent / $budget) * 100)) : 0;
-                                    $barColor = $progress < 75 ? 'bg-success' : ($progress < 100 ? 'bg-warning' : 'bg-danger');
+                                    $barColor =
+                                        $progress < 75 ? 'bg-success' : ($progress < 100 ? 'bg-warning' : 'bg-danger');
                                 @endphp
 
                                 <div class="col-md-6 mb-3">
