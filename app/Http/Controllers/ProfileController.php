@@ -48,10 +48,11 @@ class ProfileController extends Controller
 
     public function homePage(Request $request)
     {
-        $userId = Auth::id();
-        $nowEom = now()->endOfMonth(); // cap recurrences at current month
+        $userId  = Auth::id();
+        $now     = now();
+        $nowEom  = $now->copy()->endOfMonth(); // cap recurrences at current month
 
-        // Short month labels
+        // Short month labels (Jan..Dec)
         $months = collect(range(1, 12))->map(fn($m) => date('M', mktime(0, 0, 0, $m, 1)));
 
         // Data (eager-load to avoid N+1 in Blade)
@@ -59,7 +60,7 @@ class ProfileController extends Controller
         $expenses   = Expense::with('category')->where('userId', $userId)->get();
         $incomes    = Income::with('category')->where('userId', $userId)->get();
 
-        // Budgets attached to categories
+        // Attach budgets to categories
         $budgets = \App\Models\Budget::where('userId', $userId)->get()->keyBy('categoryId');
         foreach ($categories as $cat) {
             $cat->budget = optional($budgets->get($cat->id))->amount ?? 0;
@@ -74,8 +75,8 @@ class ProfileController extends Controller
          *  - If subscription == 0 AND updated_at > created_at: add cost each month from created_at through updated_at (inclusive).
          *  - Else: count only the created_at month.
          */
-        $expenseByKey = [];        // "YYYY-MM" => total expense
-        $expenseByKeyCat = [];     // "YYYY-MM" => [categoryId => total]
+        $expenseByKey     = []; // "YYYY-MM" => total expense
+        $expenseByKeyCat  = []; // "YYYY-MM" => [categoryId => total]
         foreach ($expenses as $e) {
             $cost = (float) $e->cost;
             if ($cost <= 0) continue;
@@ -84,35 +85,34 @@ class ProfileController extends Controller
             $end   = $start->copy()->endOfMonth(); // default: single month
 
             if ((int) $e->subscription === 1) {
-                $end = $nowEom->copy(); // recur through current month
+                // recurring through current month
+                $end = $nowEom->copy();
             } else {
+                // non-recurring but edited later: spread over months until updated_at
                 if ($e->updated_at && $e->updated_at->gt($e->created_at)) {
-                    $end = $e->updated_at->copy()->endOfMonth(); // span between created and updated
+                    $end = $e->updated_at->copy()->endOfMonth();
                 }
             }
 
-            if ($end->gt($nowEom)) $end = $nowEom->copy();
-            if ($end->lt($start))  $end = $start->copy();
+            if ($end->gt($nowEom)) $end = $nowEom->copy(); // never go into the future
+            if ($end->lt($start))  $end = $start->copy();  // safety
 
             $cursor = $start->copy();
             while ($cursor->lte($end)) {
                 $key = $cursor->format('Y-m');
 
                 // per-month total
-                if (!isset($expenseByKey[$key])) $expenseByKey[$key] = 0.0;
-                $expenseByKey[$key] += $cost;
+                $expenseByKey[$key] = ($expenseByKey[$key] ?? 0.0) + $cost;
 
-                // per-month-per-category (for budget view)
+                // per-month-per-category
                 $cid = (int) $e->categoryId;
-                if (!isset($expenseByKeyCat[$key])) $expenseByKeyCat[$key] = [];
-                if (!isset($expenseByKeyCat[$key][$cid])) $expenseByKeyCat[$key][$cid] = 0.0;
-                $expenseByKeyCat[$key][$cid] += $cost;
+                $expenseByKeyCat[$key][$cid] = ($expenseByKeyCat[$key][$cid] ?? 0.0) + $cost;
 
                 $cursor->addMonth();
             }
         }
 
-        // Income monthly aggregation (DB group-by is fine)
+        // Income monthly aggregation
         $monthlyRevenues = Income::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(revenue) as total_revenue')
             ->where('userId', $userId)
             ->groupBy('year', 'month')
@@ -147,10 +147,10 @@ class ProfileController extends Controller
         }
         $monthlyDatas = collect(array_values($monthlyMap));
 
-        // ✅ ADD THIS: compute $spendingHealth so it's defined for compact()
+        // Spending health (for latest month present)
         $spendingHealth = 'Unknown';
         if ($monthlyDatas->isNotEmpty()) {
-            $latest = $monthlyDatas->last();
+            $latest        = $monthlyDatas->last();
             $incomeLatest  = max(0.0, (float) ($latest['income']  ?? 0.0));
             $expenseLatest = max(0.0, (float) ($latest['expense'] ?? 0.0));
             if ($incomeLatest <= 0.0 && $expenseLatest > 0.0) {
@@ -165,10 +165,10 @@ class ProfileController extends Controller
             }
         }
 
-        // Current balance from actual records (not simulated expansion)
+        // Current balance from actual rows (no simulation)
         $currentBalance = (float) $incomes->sum('revenue') - (float) $expenses->sum('cost');
 
-        // --- Robust avg helper (trimmed mean) ---
+        // --- Robust average helper (trimmed mean) ---
         $robustAvg = function (array $values): ?float {
             $vals = array_values(array_filter($values, fn($v) => is_numeric($v)));
             $n = count($vals);
@@ -181,39 +181,31 @@ class ProfileController extends Controller
             return count($vals) ? array_sum($vals) / count($vals) : null;
         };
 
-        // 1) Separate recurring components
-        $recurringIncome  = (float) $incomes->where('mrr', 1)->sum('revenue');       // MRR-like income
-        $recurringExpense = (float) $expenses->where('subscription', 1)->sum('cost'); // subscriptions
+        // Separate recurring components
+        $recurringIncome  = (float) $incomes->where('mrr', 1)->sum('revenue');
+        $recurringExpense = (float) $expenses->where('subscription', 1)->sum('cost');
 
-        // 2) Variable components (robust historical averages from monthlyDatas)
-        $incomeSeries  = $monthlyDatas->pluck('income')->all();
-        $expenseSeries = $monthlyDatas->pluck('expense')->all();
+        // Variable components (robust historical averages)
+        $incomeAvg        = $robustAvg($monthlyDatas->pluck('income')->all())  ?? 0.0;
+        $expenseAvg       = $robustAvg($monthlyDatas->pluck('expense')->all()) ?? 0.0;
+        $variableIncome   = max(0.0, $incomeAvg  - $recurringIncome);
+        $variableExpense  = max(0.0, $expenseAvg - $recurringExpense);
 
-        $incomeAvg  = $robustAvg($incomeSeries)  ?? 0.0;
-        $expenseAvg = $robustAvg($expenseSeries) ?? 0.0;
+        // Projected monthly savings (recurring + variable)
+        $projectedMonthlySavings = ($recurringIncome - $recurringExpense) + ($variableIncome - $variableExpense);
 
-        // Variable portions (strip recurring from averages)
-        $variableIncomeAvg  = max(0.0, $incomeAvg  - $recurringIncome);
-        $variableExpenseAvg = max(0.0, $expenseAvg - $recurringExpense);
-
-        // 3) Projected monthly savings going forward (recurring + variable)
-        $projectedMonthlySavings = ($recurringIncome - $recurringExpense)
-            + ($variableIncomeAvg - $variableExpenseAvg);
-
-        // 4) Always-computable Months Until Broke
+        // Always-computable Months Until Broke
         $epsilon = 1e-6;
-        if ($projectedMonthlySavings < -$epsilon) {
-            $monthsUntilBroke = max(0, (int) ceil($currentBalance / abs($projectedMonthlySavings)));
-        } else {
-            $monthsUntilBroke = null; // healthy or flat trajectory
-        }
+        $monthsUntilBroke = ($projectedMonthlySavings < -$epsilon)
+            ? max(0, (int) ceil($currentBalance / abs($projectedMonthlySavings)))
+            : null;
 
-        // Optional: still show the historic average savings
+        // Historic average savings (for display)
         $avgSavings = $monthlyDatas->isNotEmpty()
             ? (float) $monthlyDatas->avg(fn($m) => $m['income'] - $m['expense'])
             : null;
 
-        // 12-month series for the "Income vs Expenses" chart (current year)
+        // 12-month series (current year) for Income vs Expenses chart
         $currentYear = now()->year;
         $monthlyIncome = collect(range(1, 12))->map(function ($m) use ($currentYear, $revenueByKey) {
             $key = sprintf('%04d-%02d', $currentYear, $m);
@@ -224,9 +216,28 @@ class ProfileController extends Controller
             return (float) ($expenseByKey[$key] ?? 0.0);
         });
 
-        // Spent this month per category (for the budget card)
+        // Budget card: current-month per-category spend (with recurrence applied)
         $keyThisMonth = now()->format('Y-m');
         $spentByCategoryThisMonth = $expenseByKeyCat[$keyThisMonth] ?? [];
+
+        // ---- Pie chart data (fix: use recurrence-applied data) ----
+        // Current month dataset (aligned to $categories order)
+        $pieLabels           = $categories->pluck('category')->values();
+        $pieDataThisMonth    = $categories->map(fn($cat) => (float) ($spentByCategoryThisMonth[$cat->id] ?? 0))->values();
+
+        // All-time dataset (recurrence-applied, sum over all months) for graceful fallback
+        $spentByCategoryAllTimeExpanded = [];
+        foreach ($expenseByKeyCat as $byCat) {
+            foreach ($byCat as $cid => $amt) {
+                $spentByCategoryAllTimeExpanded[$cid] = ($spentByCategoryAllTimeExpanded[$cid] ?? 0) + $amt;
+            }
+        }
+        $pieDataAllTime = $categories->map(fn($cat) => (float) ($spentByCategoryAllTimeExpanded[$cat->id] ?? 0))->values();
+
+        // Choose data: use current month if there is any non-zero; otherwise fallback to all-time
+        $pieHasNonZero = $pieDataThisMonth->contains(fn($v) => $v > 0);
+        $pieData = $pieHasNonZero ? $pieDataThisMonth : $pieDataAllTime;
+        $pieIsCurrentMonth = $pieHasNonZero;
 
         $savingsGoal = session('savingsGoal', null);
 
@@ -236,7 +247,7 @@ class ProfileController extends Controller
             'highestExpenses',
             'incomes',
             'monthlyDatas',
-            'spendingHealth',        // ✅ now defined
+            'spendingHealth',
             'monthsUntilBroke',
             'currentBalance',
             'avgSavings',
@@ -245,9 +256,14 @@ class ProfileController extends Controller
             'monthlyIncome',
             'monthlyExpenses',
             'months',
-            'spentByCategoryThisMonth'
+            'spentByCategoryThisMonth',
+            // pie chart payloads
+            'pieLabels',
+            'pieData',
+            'pieIsCurrentMonth'
         ));
     }
+
 
 
     public function setSavingsGoal(Request $request)

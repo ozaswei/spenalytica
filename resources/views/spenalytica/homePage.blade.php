@@ -428,7 +428,7 @@
                     <!-- Monthly Expenses -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Monthly Expenses</h4>
+                            <h4 class="text-center mb-3">Monthly Expenses</h4>
                             <div class="chart-container">
                                 <canvas id="monthlyExpenseChart"></canvas>
                             </div>
@@ -437,7 +437,7 @@
                     <!-- Montly Income -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Monthly Income</h4>
+                            <h4 class="text-center mb-3">Monthly Income</h4>
                             <div class="chart-container">
                                 <canvas id="monthlyIncomeChart"></canvas>
                             </div>
@@ -446,7 +446,7 @@
                     <!-- monthly saving -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Monthly Savings</h4>
+                            <h4 class="text-center mb-3">Monthly Savings</h4>
                             <div class="chart-container">
                                 <canvas id="monthlySavingsChart"></canvas>
                             </div>
@@ -455,7 +455,7 @@
                     <!-- highest expense -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Highest Expenses</h4>
+                            <h4 class="text-center mb-3">Highest Expenses</h4>
                             <div class="chart-container">
                                 <table id="highestExpense" class="display">
                                     <thead>
@@ -491,7 +491,7 @@
                     <!-- caseflow forecast -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Cashflow Forecast (Next 6 Months)</h4>
+                            <h4 class="text-center mb-3">Cashflow Forecast (Next 6 Months)</h4>
                             <div class="chart-container">
                                 <canvas id="forecastChart"></canvas>
                             </div>
@@ -500,7 +500,7 @@
                     <!-- Pie Chart for Category Wise Expenses -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
-                            <h4 class="text-center">Expenses by Category</h4>
+                            <h4 class="text-center mb-3">Expenses by Category</h4>
                             <div class="chart-container">
                                 <canvas id="expensesPieChart"></canvas>
                             </div>
@@ -508,12 +508,10 @@
                     </div>
                     <!-- Line Chart for Income vs Expenses -->
                     <div class="col-md-12 mt-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="text-center">Monthly Income vs Expenses</h4>
-                                <div class="chart-container">
-                                    <canvas id="incomeExpenseChart"></canvas>
-                                </div>
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center mb-3">Monthly Income vs Expenses</h4>
+                            <div class="chart-container">
+                                <canvas id="incomeExpenseChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -1057,24 +1055,11 @@
 @endsection
 
 @section('customJavascript')
-    @php
-        // Current-month per-category expenses
-        $expenseDataMonth = $categories->map(function ($cat) use ($expenses) {
-            return $expenses
-                ->where('categoryId', $cat->id)
-                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-                ->sum('cost');
-        });
-
-        // All-time per-category expenses (fallback if month is all zeros)
-        $expenseDataAll = $categories->map(function ($cat) use ($expenses) {
-            return $expenses->where('categoryId', $cat->id)->sum('cost');
-        });
-    @endphp
-
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // ---- DataTables ----
+            /* ===========================
+               DataTables
+            ============================ */
             if (window.jQuery && $.fn.DataTable) {
                 $('#expenseTable').DataTable();
                 $('#incomeTable').DataTable();
@@ -1082,7 +1067,9 @@
                 $('#highestExpense').DataTable({
                     order: [
                         [2, 'desc']
-                    ]
+                    ],
+                    searching: false, // hide search box
+                    lengthChange: false // hide "Show N entries"
                 });
                 if ($('#budgetTable').length) {
                     $('#budgetTable').DataTable({
@@ -1094,11 +1081,13 @@
                 }
             }
 
-            // ---- Tabs ----
+            /* ===========================
+               Tabs
+            ============================ */
             const tabLinks = document.querySelectorAll(".tab-link");
             const tabContents = document.querySelectorAll(".tab-content");
-
             let overviewRendered = false;
+
             tabLinks.forEach(link => {
                 link.addEventListener("click", () => {
                     tabLinks.forEach(l => l.classList.remove("active"));
@@ -1112,11 +1101,13 @@
                 });
             });
 
-            let activeTab = "{{ session('activeTab', 'overview') }}";
+            const activeTab = "{{ session('activeTab', 'overview') }}";
             tabLinks.forEach(l => l.classList.toggle('active', l.dataset.target === activeTab));
             tabContents.forEach(c => c.classList.toggle('active', c.id === activeTab));
 
-            // ---- Month filter defaults ----
+            /* ===========================
+               Month filter defaults
+            ============================ */
             const setCurrentMonthInput = (id) => {
                 const input = document.getElementById(id);
                 if (!input) return;
@@ -1138,12 +1129,16 @@
                 $(`#${tableId}`).DataTable().draw();
                 $.fn.dataTable.ext.search.pop();
             }
-            document.getElementById('expenseMonthFilter')?.addEventListener('change', e => filterByMonth(
-                'expenseTable', 4, e.target.value));
-            document.getElementById('incomeMonthFilter')?.addEventListener('change', e => filterByMonth(
-                'incomeTable', 3, e.target.value));
+            document.getElementById('expenseMonthFilter')?.addEventListener('change', e =>
+                filterByMonth('expenseTable', 4, e.target.value)
+            );
+            document.getElementById('incomeMonthFilter')?.addEventListener('change', e =>
+                filterByMonth('incomeTable', 3, e.target.value)
+            );
 
-            // ---- Edit modals ----
+            /* ===========================
+               Edit modals (Category/Expense/Income)
+            ============================ */
             const setupEditModal = (btnSelector, formFields, rowAttrPrefix) => {
                 document.querySelectorAll(btnSelector).forEach(btn => {
                     btn.addEventListener('click', function() {
@@ -1169,24 +1164,21 @@
                 expenseDescription: 'description'
             }, 'e');
 
-            // Income modal reads from data-* on the button
             document.querySelectorAll('.editIncomeBtn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const ds = this.dataset;
                     const idEl = document.getElementById('incomeId');
-                    const labelEl = document.getElementById('editLabel');
+                    const label = document.getElementById('editLabel');
                     const catEl = document.getElementById('editCategoryId');
                     const revEl = document.getElementById('editRevenue');
                     const descEl = document.getElementById('editDescription');
                     const mrrYes = document.getElementById('editMrrYes');
                     const mrrNo = document.getElementById('editMrrNo');
-
                     if (idEl) idEl.value = ds.id ?? '';
-                    if (labelEl) labelEl.value = ds.label ?? '';
+                    if (label) label.value = ds.label ?? '';
                     if (catEl) catEl.value = ds.category ?? '';
                     if (revEl) revEl.value = ds.revenue ?? '';
                     if (descEl) descEl.value = ds.description ?? '';
-
                     if (typeof ds.mrr !== 'undefined') {
                         if (String(ds.mrr) === '1') {
                             mrrYes.checked = true;
@@ -1199,32 +1191,42 @@
                 });
             });
 
-            // ---- Chart data from PHP ----
+            /* ===========================
+               Chart data from PHP
+               (subscription-aware pie data is prepared in the controller)
+            ============================ */
             const monthsShort = @json($months);
             const monthlyDatas = @json($monthlyDatas);
-            const categories = @json($categories);
-            const expenseMonthArr = @json($expenseDataMonth);
-            const expenseAllArr = @json($expenseDataAll);
             const monthlyIncome = @json($monthlyIncome);
             const monthlyExpenses = @json($monthlyExpenses);
 
-            // Fallback data for pie
-            const hasNonZero = (arr) => Array.isArray(arr) && arr.some(v => Number(v) > 0);
-            const expenseDataForPie = hasNonZero(expenseMonthArr) ? expenseMonthArr : expenseAllArr;
+            const pieLabels = @json($pieLabels);
+            const pieData = @json($pieData);
+            const pieIsCurrentMonth = @json($pieIsCurrentMonth);
 
-            // Chart.js defaults
+            /* ===========================
+               Chart.js defaults & helpers
+            ============================ */
             if (window.Chart) {
                 Chart.defaults.color = '#ffffff';
                 Chart.defaults.font.size = 12;
                 Chart.defaults.plugins.legend.labels.boxWidth = 14;
                 Chart.defaults.plugins.legend.labels.boxHeight = 14;
                 Chart.defaults.elements.point.radius = 3;
-                Chart.defaults.elements.point.hoverRadius = 5;
+                Chart.defaults.elements.point.hoverRadius = 6;
+                Chart.defaults.animation.duration = 900;
+                Chart.defaults.animations.colors = {
+                    type: 'color',
+                    duration: 700
+                };
+                Chart.defaults.animations.numbers = {
+                    type: 'number',
+                    duration: 700
+                };
+                Chart.defaults.transitions.active.animation.duration = 200;
             }
 
             const $id = (x) => document.getElementById(x);
-
-            // Registry to ensure single instance per canvas
             window.__charts = window.__charts || {};
 
             const safeYScale = {
@@ -1249,41 +1251,39 @@
                 }
             };
 
-            // Ensure canvas height follows its .chart-container and stays fixed
+            // gradient helper
+            function makeGradient(ctx, area, from = 'rgba(255,255,255,0.20)', to = 'rgba(255,255,255,0.02)') {
+                const gradient = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+                gradient.addColorStop(0, from);
+                gradient.addColorStop(1, to);
+                return gradient;
+            }
+
+            // keep canvas height pinned to container for stable animations
             function pinCanvasHeight(canvas) {
                 const parent = canvas?.parentElement;
                 if (!parent) return;
-                // Use the container's content height, not auto-expanding
                 const h = parent.clientHeight || 340;
                 canvas.style.height = h + 'px';
-                canvas.height = h; // set attribute too (stabilizes retina scaling)
+                canvas.height = h;
             }
 
             function makeOrUpdateChart(key, canvasId, configBuilder) {
                 const canvas = $id(canvasId);
                 if (!canvas) return;
-
                 pinCanvasHeight(canvas);
 
                 const existing = window.__charts[key];
+                const cfg = configBuilder();
+
                 if (existing) {
-                    // Update existing chart data in-place
-                    const {
-                        data,
-                        options,
-                        type
-                    } = configBuilder();
-                    existing.config.type = type || existing.config.type;
-                    // shallow replace labels & datasets (same shape expected)
-                    existing.data.labels = data.labels;
-                    existing.data.datasets = data.datasets;
-                    // merge options we care about
-                    existing.options.scales = options.scales || existing.options.scales;
-                    existing.options.plugins = options.plugins || existing.options.plugins;
+                    existing.config.type = cfg.type || existing.config.type;
+                    existing.data.labels = cfg.data.labels;
+                    existing.data.datasets = cfg.data.datasets;
+                    existing.options = Object.assign(existing.options, cfg.options || {});
                     existing.update();
                     return existing;
                 } else {
-                    const cfg = configBuilder();
                     const chart = new Chart(canvas.getContext('2d'), {
                         type: cfg.type,
                         data: cfg.data,
@@ -1298,11 +1298,13 @@
                 }
             }
 
+            /* ===========================
+               Charts (render on Overview)
+            ============================ */
             function renderOverviewCharts() {
-                // labels
                 const labelsFromMonthly = monthlyDatas.map(d => monthsShort[(d.month ?? 0) - 1] ?? '');
 
-                // 1) Monthly Expenses Doughnut
+                // 1) Monthly Expenses (doughnut)
                 makeOrUpdateChart('monthlyExpenseChart', 'monthlyExpenseChart', () => ({
                     type: 'doughnut',
                     data: {
@@ -1318,6 +1320,10 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        },
                         plugins: {
                             legend: {
                                 position: 'bottom'
@@ -1326,7 +1332,7 @@
                     }
                 }));
 
-                // 2) Monthly Income Bar (stable height)
+                // 2) Monthly Income (bar) — gradient aligned with page background (green → blue)
                 makeOrUpdateChart('monthlyIncomeChart', 'monthlyIncomeChart', () => ({
                     type: 'bar',
                     data: {
@@ -1334,9 +1340,35 @@
                         datasets: [{
                             label: 'Total Revenue',
                             data: monthlyDatas.map(d => d.income),
-                            backgroundColor: '#2ecc71',
-                            borderColor: '#ffffff',
-                            borderWidth: 1
+                            // Scriptable background so it always matches current size
+                            backgroundColor: (ctx) => {
+                                const chart = ctx.chart;
+                                const {
+                                    ctx: c,
+                                    chartArea
+                                } = chart;
+                                if (!chartArea) return '#74b9ff';
+                                const grad = c.createLinearGradient(chartArea.left, 0,
+                                    chartArea.right, 0);
+                                grad.addColorStop(0, '#28c76f'); // brand green
+                                grad.addColorStop(1, '#0099ff'); // brand blue
+                                return grad;
+                            },
+                            borderColor: 'rgba(255,255,255,0.65)',
+                            borderWidth: 1,
+                            hoverBackgroundColor: (ctx) => {
+                                const chart = ctx.chart;
+                                const {
+                                    ctx: c,
+                                    chartArea
+                                } = chart;
+                                if (!chartArea) return '#74b9ff';
+                                const grad = c.createLinearGradient(chartArea.left, 0,
+                                    chartArea.right, 0);
+                                grad.addColorStop(0, 'rgba(40,199,111,0.95)');
+                                grad.addColorStop(1, 'rgba(0,153,255,0.95)');
+                                return grad;
+                            }
                         }]
                     },
                     options: {
@@ -1352,40 +1384,49 @@
                     }
                 }));
 
-                // 3) Monthly Savings Line
-                makeOrUpdateChart('monthlySavingsChart', 'monthlySavingsChart', () => ({
-                    type: 'line',
-                    data: {
-                        labels: labelsFromMonthly,
-                        datasets: [{
-                            label: 'Total Savings',
-                            data: monthlyDatas.map(d => d.savings),
-                            borderColor: '#FFFFFF',
-                            backgroundColor: 'rgba(255,255,255,0.15)',
-                            fill: true,
-                            tension: 0.3
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: safeXGrid,
-                            y: safeYScale
+                // 3) Monthly Savings (line + gradient)
+                makeOrUpdateChart('monthlySavingsChart', 'monthlySavingsChart', () => {
+                    const canvas = $id('monthlySavingsChart');
+                    const ctx = canvas.getContext('2d');
+                    const area = {
+                        top: 0,
+                        bottom: canvas.height
+                    };
+                    const bg = makeGradient(ctx, area, 'rgba(255,255,255,0.25)', 'rgba(255,255,255,0.04)');
+                    return {
+                        type: 'line',
+                        data: {
+                            labels: labelsFromMonthly,
+                            datasets: [{
+                                label: 'Total Savings',
+                                data: monthlyDatas.map(d => d.savings),
+                                borderColor: '#FFFFFF',
+                                backgroundColor: bg,
+                                fill: true,
+                                tension: 0.35
+                            }]
                         },
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
+                        options: {
+                            scales: {
+                                x: safeXGrid,
+                                y: safeYScale
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
                             }
                         }
-                    }
-                }));
+                    };
+                });
 
-                // 4) Expenses by Category Pie
+                // 4) Expenses by Category (PIE) — subscription-aware
                 makeOrUpdateChart('expensesPieChart', 'expensesPieChart', () => ({
                     type: 'pie',
                     data: {
-                        labels: categories.map(c => c.category),
+                        labels: pieLabels,
                         datasets: [{
-                            data: expenseDataForPie,
+                            data: pieData,
                             backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
                                 '#9966FF', '#FF9F40', '#8DD3C7', '#BC80BD', '#80B1D3',
                                 '#FB8072'
@@ -1395,103 +1436,122 @@
                         }]
                     },
                     options: {
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        },
                         plugins: {
                             legend: {
                                 position: 'top'
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: (ctx) =>
-                                        `${ctx.label}: ${Number(ctx.parsed || 0).toLocaleString()}`
+                                    title: (items) => {
+                                        const scope = pieIsCurrentMonth ? 'This month' : 'All time';
+                                        return `${items[0].label} — ${scope}`;
+                                    },
+                                    label: (ctx) => `${Number(ctx.parsed || 0).toLocaleString()}`
                                 }
                             }
                         }
                     }
                 }));
 
-                // 5) Income vs Expenses (12-month) — create once, update later if needed
-                makeOrUpdateChart('incomeExpenseChart', 'incomeExpenseChart', () => ({
-                    type: 'line',
-                    data: {
-                        labels: monthsShort,
-                        datasets: [{
-                                label: 'Income',
-                                data: monthlyIncome,
-                                borderColor: '#00E676',
-                                backgroundColor: 'rgba(0,230,118,0.15)',
-                                fill: true,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Expenses',
-                                data: monthlyExpenses,
-                                borderColor: '#FF5252',
-                                backgroundColor: 'rgba(255,82,82,0.15)',
-                                fill: true,
-                                tension: 0.3
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            x: safeXGrid,
-                            y: safeYScale
+                // 5) Income vs Expenses (12-month lines + gradient)
+                makeOrUpdateChart('incomeExpenseChart', 'incomeExpenseChart', () => {
+                    const canvas = $id('incomeExpenseChart');
+                    const ctx = canvas.getContext('2d');
+                    const area = {
+                        top: 0,
+                        bottom: canvas.height
+                    };
+                    const gradIncome = makeGradient(ctx, area, 'rgba(0,230,118,0.25)',
+                        'rgba(0,230,118,0.02)');
+                    const gradExpense = makeGradient(ctx, area, 'rgba(255,82,82,0.25)',
+                        'rgba(255,82,82,0.02)');
+                    return {
+                        type: 'line',
+                        data: {
+                            labels: monthsShort,
+                            datasets: [{
+                                    label: 'Income',
+                                    data: monthlyIncome,
+                                    borderColor: '#00E676',
+                                    backgroundColor: gradIncome,
+                                    fill: true,
+                                    tension: 0.35
+                                },
+                                {
+                                    label: 'Expenses',
+                                    data: monthlyExpenses,
+                                    borderColor: '#FF5252',
+                                    backgroundColor: gradExpense,
+                                    fill: true,
+                                    tension: 0.35
+                                }
+                            ]
                         },
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
+                        options: {
+                            scales: {
+                                x: safeXGrid,
+                                y: safeYScale
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
                             }
                         }
-                    }
-                }));
+                    };
+                });
 
-                // 6) Forecast — guard against duplicate AJAX + update existing chart
-                if (window.jQuery) {
-                    // Only fetch once per page view
-                    if (!window.__forecastLoaded) {
-                        window.__forecastLoaded = true;
-                        $.get("{{ route('forecast.data') }}")
-                            .done((data) => {
-                                makeOrUpdateChart('forecastChart', 'forecastChart', () => ({
-                                    type: 'line',
-                                    data: {
-                                        labels: data.months,
-                                        datasets: [{
-                                            label: 'Projected Balance',
-                                            data: data.forecast,
-                                            borderColor: '#FFFFFF',
-                                            backgroundColor: 'rgba(255,255,255,0.15)',
-                                            fill: true,
-                                            tension: 0.3
-                                        }]
+                // 6) Forecast (AJAX once)
+                if (window.jQuery && !window.__forecastLoaded) {
+                    window.__forecastLoaded = true;
+                    $.get("{{ route('forecast.data') }}")
+                        .done((data) => {
+                            makeOrUpdateChart('forecastChart', 'forecastChart', () => ({
+                                type: 'line',
+                                data: {
+                                    labels: data.months,
+                                    datasets: [{
+                                        label: 'Projected Balance',
+                                        data: data.forecast,
+                                        borderColor: '#FFFFFF',
+                                        backgroundColor: 'rgba(255,255,255,0.12)',
+                                        fill: true,
+                                        tension: 0.35
+                                    }]
+                                },
+                                options: {
+                                    animation: {
+                                        duration: 800
                                     },
-                                    options: {
-                                        scales: {
-                                            x: safeXGrid,
-                                            y: safeYScale
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                display: true,
-                                                position: 'top'
-                                            }
+                                    scales: {
+                                        x: safeXGrid,
+                                        y: safeYScale
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'top'
                                         }
                                     }
-                                }));
-                            })
-                            .fail(() => {
-                                const ctx = $id('forecastChart')?.getContext('2d');
-                                if (ctx) {
-                                    ctx.font = '14px sans-serif';
-                                    ctx.fillStyle = '#fff';
-                                    ctx.fillText('Unable to load forecast data.', 10, 20);
                                 }
-                            });
-                    }
+                            }));
+                        })
+                        .fail(() => {
+                            const ctx = $id('forecastChart')?.getContext('2d');
+                            if (ctx) {
+                                ctx.font = '14px sans-serif';
+                                ctx.fillStyle = '#fff';
+                                ctx.fillText('Unable to load forecast data.', 10, 20);
+                            }
+                        });
                 }
             }
 
-            // Initial render if Overview tab is shown
+            // Initial render if Overview tab is showing
             if (document.getElementById('overview')?.classList.contains('active')) {
                 renderOverviewCharts();
                 overviewRendered = true;
