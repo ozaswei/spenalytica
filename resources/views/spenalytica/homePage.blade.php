@@ -425,51 +425,70 @@
 
                 <!-- Charts and Highest Expense Table -->
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <canvas id="monthlyExpenseChart"></canvas>
+                    <!-- Monthly Expenses -->
+                    <div class="col-md-6 mt-4">
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Monthly Expenses</h4>
+                            <div class="chart-container">
+                                <canvas id="monthlyExpenseChart"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <canvas id="monthlyIncomeChart"></canvas>
+                    <!-- Montly Income -->
+                    <div class="col-md-6 mt-4">
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Monthly Income</h4>
+                            <div class="chart-container">
+                                <canvas id="monthlyIncomeChart"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <canvas id="monthlySavingsChart"></canvas>
+                    <!-- monthly saving -->
+                    <div class="col-md-6 mt-4">
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Monthly Savings</h4>
+                            <div class="chart-container">
+                                <canvas id="monthlySavingsChart"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <table id="highestExpense" class="display">
-                            <thead>
-                                <tr>
-                                    <th>Expense</th>
-                                    <th>Category</th>
-                                    <th>Cost</th>
-                                    <th>Added at</th>
-                                    <th>Updated at</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($highestExpenses as $expense)
-                                    <tr>
-                                        <td>{{ $expense->expense }}</td>
-                                        <td>{{ $expense->category->category }}</td>
-                                        <td>{{ $expense->cost }}</td>
-                                        <td>{{ $expense->created_at->format('Y-m-d') }}</td>
-                                        <td>
-                                            @if ($expense->created_at != $expense->updated_at)
-                                                {{ $expense->updated_at->diffForHumans() }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <!-- highest expense -->
+                    <div class="col-md-6 mt-4">
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Highest Expenses</h4>
+                            <div class="chart-container">
+                                <table id="highestExpense" class="display">
+                                    <thead>
+                                        <tr>
+                                            <th>Expense</th>
+                                            <th>Category</th>
+                                            <th>Cost</th>
+                                            <th>Added at</th>
+                                            <th>Updated at</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($highestExpenses as $expense)
+                                            <tr>
+                                                <td>{{ $expense->expense }}</td>
+                                                <td>{{ $expense->category->category }}</td>
+                                                <td>{{ $expense->cost }}</td>
+                                                <td>{{ $expense->created_at->format('Y-m-d') }}</td>
+                                                <td>
+                                                    @if ($expense->created_at != $expense->updated_at)
+                                                        {{ $expense->updated_at->diffForHumans() }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+                    <!-- caseflow forecast -->
                     <div class="col-md-6 mt-4">
                         <div class="card p-3 shadow-lg rounded-2xl">
                             <h4 class="text-center">Cashflow Forecast (Next 6 Months)</h4>
@@ -478,22 +497,20 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Pie Chart for Category Wise Expenses -->
                     <div class="col-md-6 mt-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <!-- Pie Chart for Category Wise Expenses -->
-                                <h6>Expenses by Category</h6>
-                                <div class="chart-container">
-                                    <canvas id="expensesPieChart"></canvas>
-                                </div>
+                        <div class="card p-3 shadow-lg rounded-2xl">
+                            <h4 class="text-center">Expenses by Category</h4>
+                            <div class="chart-container">
+                                <canvas id="expensesPieChart"></canvas>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-12 ">
+                    <!-- Line Chart for Income vs Expenses -->
+                    <div class="col-md-12 mt-4">
                         <div class="card">
                             <div class="card-body">
-                                <!-- Line Chart for Income vs Expenses -->
-                                <h6>Monthly Income vs Expenses</h6>
+                                <h4 class="text-center">Monthly Income vs Expenses</h4>
                                 <div class="chart-container">
                                     <canvas id="incomeExpenseChart"></canvas>
                                 </div>
@@ -1317,7 +1334,7 @@
                         datasets: [{
                             label: 'Total Revenue',
                             data: monthlyDatas.map(d => d.income),
-                            backgroundColor: '#4FC3F7',
+                            backgroundColor: '#2ecc71',
                             borderColor: '#ffffff',
                             borderWidth: 1
                         }]
