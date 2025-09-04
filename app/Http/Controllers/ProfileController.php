@@ -49,7 +49,7 @@ class ProfileController extends Controller
     public function homePage(Request $request)
     {
         $userId = Auth::id();
-        $nowEom = now()->endOfMonth(); // cap any recurrences at the current month
+        $nowEom = now()->endOfMonth(); // cap recurrences at current month
 
         // Short month labels
         $months = collect(range(1, 12))->map(fn($m) => date('M', mktime(0, 0, 0, $m, 1)));
@@ -73,7 +73,6 @@ class ProfileController extends Controller
          *  - If subscription == 1: add cost each month from created_at (inclusive) through current month (inclusive).
          *  - If subscription == 0 AND updated_at > created_at: add cost each month from created_at through updated_at (inclusive).
          *  - Else: count only the created_at month.
-         * Guardrails: skip cost <= 0, never go beyond current month, collapse invalid date spans to created_at month.
          */
         $expenseByKey = [];        // "YYYY-MM" => total expense
         $expenseByKeyCat = [];     // "YYYY-MM" => [categoryId => total]
@@ -148,6 +147,24 @@ class ProfileController extends Controller
         }
         $monthlyDatas = collect(array_values($monthlyMap));
 
+        // ✅ ADD THIS: compute $spendingHealth so it's defined for compact()
+        $spendingHealth = 'Unknown';
+        if ($monthlyDatas->isNotEmpty()) {
+            $latest = $monthlyDatas->last();
+            $incomeLatest  = max(0.0, (float) ($latest['income']  ?? 0.0));
+            $expenseLatest = max(0.0, (float) ($latest['expense'] ?? 0.0));
+            if ($incomeLatest <= 0.0 && $expenseLatest > 0.0) {
+                $spendingHealth = 'Critical';
+            } elseif ($expenseLatest === 0.0 && $incomeLatest === 0.0) {
+                $spendingHealth = 'No activity';
+            } else {
+                $ratio = $expenseLatest / max(1.0, $incomeLatest);
+                $spendingHealth = $ratio >= 1.0 ? 'Unhealthy'
+                    : ($ratio >= 0.75 ? 'At Risk'
+                        : ($ratio >= 0.5 ? 'Neutral' : 'Healthy'));
+            }
+        }
+
         // Current balance from actual records (not simulated expansion)
         $currentBalance = (float) $incomes->sum('revenue') - (float) $expenses->sum('cost');
 
@@ -157,10 +174,10 @@ class ProfileController extends Controller
             $n = count($vals);
             if ($n === 0) return null;
             sort($vals);
-            if ($n >= 3) { // drop min & max when possible
+            if ($n >= 3) {
                 array_shift($vals);
                 array_pop($vals);
-            }
+            } // drop min & max
             return count($vals) ? array_sum($vals) / count($vals) : null;
         };
 
@@ -175,7 +192,7 @@ class ProfileController extends Controller
         $incomeAvg  = $robustAvg($incomeSeries)  ?? 0.0;
         $expenseAvg = $robustAvg($expenseSeries) ?? 0.0;
 
-        // Remove the recurring part from the historical averages to estimate variable share
+        // Variable portions (strip recurring from averages)
         $variableIncomeAvg  = max(0.0, $incomeAvg  - $recurringIncome);
         $variableExpenseAvg = max(0.0, $expenseAvg - $recurringExpense);
 
@@ -191,7 +208,7 @@ class ProfileController extends Controller
             $monthsUntilBroke = null; // healthy or flat trajectory
         }
 
-        // Keep an average savings for display if you still show it
+        // Optional: still show the historic average savings
         $avgSavings = $monthlyDatas->isNotEmpty()
             ? (float) $monthlyDatas->avg(fn($m) => $m['income'] - $m['expense'])
             : null;
@@ -211,13 +228,15 @@ class ProfileController extends Controller
         $keyThisMonth = now()->format('Y-m');
         $spentByCategoryThisMonth = $expenseByKeyCat[$keyThisMonth] ?? [];
 
+        $savingsGoal = session('savingsGoal', null);
+
         return view('spenalytica.homePage', compact(
             'categories',
             'expenses',
             'highestExpenses',
             'incomes',
             'monthlyDatas',
-            'spendingHealth',
+            'spendingHealth',        // ✅ now defined
             'monthsUntilBroke',
             'currentBalance',
             'avgSavings',
@@ -229,6 +248,7 @@ class ProfileController extends Controller
             'spentByCategoryThisMonth'
         ));
     }
+
 
     public function setSavingsGoal(Request $request)
     {
