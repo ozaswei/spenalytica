@@ -733,9 +733,13 @@
                                 @foreach ($categories as $category)
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">{{ $category->category }}</label>
-                                        <input type="number" name="budgets[{{ $category->id }}]" class="form-control"
+                                        @error('budgets.' . $category->id)
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                        <input type="number" step="0.01" min="0"
+                                            name="budgets[{{ $category->id }}]" class="form-control"
                                             placeholder="Set budget for {{ $category->category }}"
-                                            value="{{ old('budgets.' . $category->id, $category->budget ?? 0) }}">
+                                            value="{{ old('budgets.' . $category->id, $category->budget ?? '') }}">
                                     </div>
                                 @endforeach
                             </div>
@@ -752,16 +756,13 @@
                         <div class="row">
                             @foreach ($categories as $category)
                                 @php
-                                    // Calculate spent this month
-                                    $spent = $expenses
-                                        ->where('categoryId', $category->id)
-                                        ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-                                        ->sum('cost');
-                                    $budget = $category->budget ?? 0;
+                                    // Spent this month per category, using the controller's recurrence-aware totals
+                                    $spent = (float) ($spentByCategoryThisMonth[$category->id] ?? 0);
+                                    $budget = (float) ($category->budget ?? 0);
                                     $progress = $budget > 0 ? min(100, round(($spent / $budget) * 100)) : 0;
-                                    $barColor =
-                                        $progress < 75 ? 'bg-success' : ($progress < 100 ? 'bg-warning' : 'bg-danger');
+                                    $barColor = $progress < 75 ? 'bg-success' : ($progress < 100 ? 'bg-warning' : 'bg-danger');
                                 @endphp
+
                                 <div class="col-md-6 mb-3">
                                     <h6>{{ $category->category }}</h6>
                                     <div class="progress" style="height: 20px;">
@@ -1061,9 +1062,18 @@
                 $('#expenseTable').DataTable();
                 $('#incomeTable').DataTable();
                 $('#categoryTable').DataTable();
-                $('#highestExpense').DataTable({ order: [[2,'desc']] });
-                if ($('#budgetTable').length){
-                    $('#budgetTable').DataTable({ responsive:true, pageLength:10, lengthChange:false, autoWidth:false });
+                $('#highestExpense').DataTable({
+                    order: [
+                        [2, 'desc']
+                    ]
+                });
+                if ($('#budgetTable').length) {
+                    $('#budgetTable').DataTable({
+                        responsive: true,
+                        pageLength: 10,
+                        lengthChange: false,
+                        autoWidth: false
+                    });
                 }
             }
 
@@ -1099,39 +1109,52 @@
             setCurrentMonthInput('expenseMonthFilter');
             setCurrentMonthInput('incomeMonthFilter');
 
-            function filterByMonth(tableId, colIndex, monthValue){
-                const year = monthValue.substring(0,4);
-                const month = monthValue.substring(5,7);
+            function filterByMonth(tableId, colIndex, monthValue) {
+                const year = monthValue.substring(0, 4);
+                const month = monthValue.substring(5, 7);
                 if (!window.jQuery || !$.fn.dataTable) return;
-                $.fn.dataTable.ext.search.push((settings,data) => {
-                    if(settings.nTable.id !== tableId) return true;
+                $.fn.dataTable.ext.search.push((settings, data) => {
+                    if (settings.nTable.id !== tableId) return true;
                     const d = new Date(data[colIndex]);
-                    return d.getFullYear() == year && (d.getMonth()+1) == parseInt(month);
+                    return d.getFullYear() == year && (d.getMonth() + 1) == parseInt(month);
                 });
                 $(`#${tableId}`).DataTable().draw();
                 $.fn.dataTable.ext.search.pop();
             }
-            document.getElementById('expenseMonthFilter')?.addEventListener('change', e => filterByMonth('expenseTable',4,e.target.value));
-            document.getElementById('incomeMonthFilter')?.addEventListener('change', e => filterByMonth('incomeTable',3,e.target.value));
+            document.getElementById('expenseMonthFilter')?.addEventListener('change', e => filterByMonth(
+                'expenseTable', 4, e.target.value));
+            document.getElementById('incomeMonthFilter')?.addEventListener('change', e => filterByMonth(
+                'incomeTable', 3, e.target.value));
 
             // ---- Edit modals ----
             const setupEditModal = (btnSelector, formFields, rowAttrPrefix) => {
                 document.querySelectorAll(btnSelector).forEach(btn => {
-                    btn.addEventListener('click', function(){
+                    btn.addEventListener('click', function() {
                         const row = this.closest('tr');
                         for (const [fieldId, attrName] of Object.entries(formFields)) {
                             const el = document.getElementById(fieldId);
-                            if (el && row) el.value = row.getAttribute(`${rowAttrPrefix}-${attrName}`) ?? '';
+                            if (el && row) el.value = row.getAttribute(
+                                `${rowAttrPrefix}-${attrName}`) ?? '';
                         }
                     });
                 });
             };
-            setupEditModal('.editCategoryBtn', {categoryName:'name', categoryDescription:'description', categoryId:'id'}, 'cat');
-            setupEditModal('.editExpenseBtn', {expenseId:'id', expenseName:'name', expenseCategory:'category', expenseCost:'cost', expenseDescription:'description'}, 'e');
+            setupEditModal('.editCategoryBtn', {
+                categoryName: 'name',
+                categoryDescription: 'description',
+                categoryId: 'id'
+            }, 'cat');
+            setupEditModal('.editExpenseBtn', {
+                expenseId: 'id',
+                expenseName: 'name',
+                expenseCategory: 'category',
+                expenseCost: 'cost',
+                expenseDescription: 'description'
+            }, 'e');
 
             // Income modal reads from data-* on the button
             document.querySelectorAll('.editIncomeBtn').forEach(btn => {
-                btn.addEventListener('click', function(){
+                btn.addEventListener('click', function() {
                     const ds = this.dataset;
                     const idEl = document.getElementById('incomeId');
                     const labelEl = document.getElementById('editLabel');
@@ -1139,7 +1162,7 @@
                     const revEl = document.getElementById('editRevenue');
                     const descEl = document.getElementById('editDescription');
                     const mrrYes = document.getElementById('editMrrYes');
-                    const mrrNo  = document.getElementById('editMrrNo');
+                    const mrrNo = document.getElementById('editMrrNo');
 
                     if (idEl) idEl.value = ds.id ?? '';
                     if (labelEl) labelEl.value = ds.label ?? '';
@@ -1148,19 +1171,24 @@
                     if (descEl) descEl.value = ds.description ?? '';
 
                     if (typeof ds.mrr !== 'undefined') {
-                        if (String(ds.mrr) === '1') { mrrYes.checked = true; mrrNo.checked = false; }
-                        else { mrrYes.checked = false; mrrNo.checked = true; }
+                        if (String(ds.mrr) === '1') {
+                            mrrYes.checked = true;
+                            mrrNo.checked = false;
+                        } else {
+                            mrrYes.checked = false;
+                            mrrNo.checked = true;
+                        }
                     }
                 });
             });
 
             // ---- Chart data from PHP ----
-            const monthsShort     = @json($months);
-            const monthlyDatas    = @json($monthlyDatas);
-            const categories      = @json($categories);
+            const monthsShort = @json($months);
+            const monthlyDatas = @json($monthlyDatas);
+            const categories = @json($categories);
             const expenseMonthArr = @json($expenseDataMonth);
-            const expenseAllArr   = @json($expenseDataAll);
-            const monthlyIncome   = @json($monthlyIncome);
+            const expenseAllArr = @json($expenseDataAll);
+            const monthlyIncome = @json($monthlyIncome);
             const monthlyExpenses = @json($monthlyExpenses);
 
             // Fallback data for pie
@@ -1184,13 +1212,25 @@
 
             const safeYScale = {
                 beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.15)' },
+                grid: {
+                    color: 'rgba(255,255,255,0.15)'
+                },
                 ticks: {
                     maxTicksLimit: 8,
-                    callback: (val) => { try { return Number(val).toLocaleString(); } catch { return val; } }
+                    callback: (val) => {
+                        try {
+                            return Number(val).toLocaleString();
+                        } catch {
+                            return val;
+                        }
+                    }
                 }
             };
-            const safeXGrid = { grid: { color: 'rgba(255,255,255,0.15)' } };
+            const safeXGrid = {
+                grid: {
+                    color: 'rgba(255,255,255,0.15)'
+                }
+            };
 
             // Ensure canvas height follows its .chart-container and stays fixed
             function pinCanvasHeight(canvas) {
@@ -1211,7 +1251,11 @@
                 const existing = window.__charts[key];
                 if (existing) {
                     // Update existing chart data in-place
-                    const { data, options, type } = configBuilder();
+                    const {
+                        data,
+                        options,
+                        type
+                    } = configBuilder();
                     existing.config.type = type || existing.config.type;
                     // shallow replace labels & datasets (same shape expected)
                     existing.data.labels = data.labels;
@@ -1237,28 +1281,36 @@
                 }
             }
 
-            function renderOverviewCharts(){
+            function renderOverviewCharts() {
                 // labels
-                const labelsFromMonthly = monthlyDatas.map(d => monthsShort[(d.month ?? 0)-1] ?? '');
+                const labelsFromMonthly = monthlyDatas.map(d => monthsShort[(d.month ?? 0) - 1] ?? '');
 
                 // 1) Monthly Expenses Doughnut
-                makeOrUpdateChart('monthlyExpenseChart','monthlyExpenseChart', () => ({
+                makeOrUpdateChart('monthlyExpenseChart', 'monthlyExpenseChart', () => ({
                     type: 'doughnut',
                     data: {
                         labels: labelsFromMonthly,
                         datasets: [{
                             label: 'Total Spendings',
                             data: monthlyDatas.map(d => d.expense),
-                            backgroundColor: ['#FF6B6B','#4FC3F7','#FFD166','#6EE7B7','#A78BFA','#26C6DA','#FCA5A5','#F59E0B'],
+                            backgroundColor: ['#FF6B6B', '#4FC3F7', '#FFD166', '#6EE7B7',
+                                '#A78BFA', '#26C6DA', '#FCA5A5', '#F59E0B'
+                            ],
                             borderColor: '#ffffff',
                             borderWidth: 2
                         }]
                     },
-                    options: { plugins: { legend: { position: 'bottom' } } }
+                    options: {
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
                 }));
 
                 // 2) Monthly Income Bar (stable height)
-                makeOrUpdateChart('monthlyIncomeChart','monthlyIncomeChart', () => ({
+                makeOrUpdateChart('monthlyIncomeChart', 'monthlyIncomeChart', () => ({
                     type: 'bar',
                     data: {
                         labels: labelsFromMonthly,
@@ -1271,13 +1323,20 @@
                         }]
                     },
                     options: {
-                        scales: { x: safeXGrid, y: safeYScale },
-                        plugins: { legend: { position: 'bottom' } }
+                        scales: {
+                            x: safeXGrid,
+                            y: safeYScale
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
                     }
                 }));
 
                 // 3) Monthly Savings Line
-                makeOrUpdateChart('monthlySavingsChart','monthlySavingsChart', () => ({
+                makeOrUpdateChart('monthlySavingsChart', 'monthlySavingsChart', () => ({
                     type: 'line',
                     data: {
                         labels: labelsFromMonthly,
@@ -1291,46 +1350,81 @@
                         }]
                     },
                     options: {
-                        scales: { x: safeXGrid, y: safeYScale },
-                        plugins: { legend: { position: 'bottom' } }
+                        scales: {
+                            x: safeXGrid,
+                            y: safeYScale
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
                     }
                 }));
 
                 // 4) Expenses by Category Pie
-                makeOrUpdateChart('expensesPieChart','expensesPieChart', () => ({
+                makeOrUpdateChart('expensesPieChart', 'expensesPieChart', () => ({
                     type: 'pie',
                     data: {
                         labels: categories.map(c => c.category),
                         datasets: [{
                             data: expenseDataForPie,
-                            backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8DD3C7','#BC80BD','#80B1D3','#FB8072'],
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                                '#9966FF', '#FF9F40', '#8DD3C7', '#BC80BD', '#80B1D3',
+                                '#FB8072'
+                            ],
                             borderColor: '#ffffff',
                             borderWidth: 2
                         }]
                     },
                     options: {
                         plugins: {
-                            legend: { position: 'top' },
+                            legend: {
+                                position: 'top'
+                            },
                             tooltip: {
-                                callbacks: { label: (ctx) => `${ctx.label}: ${Number(ctx.parsed || 0).toLocaleString()}` }
+                                callbacks: {
+                                    label: (ctx) =>
+                                        `${ctx.label}: ${Number(ctx.parsed || 0).toLocaleString()}`
+                                }
                             }
                         }
                     }
                 }));
 
                 // 5) Income vs Expenses (12-month) — create once, update later if needed
-                makeOrUpdateChart('incomeExpenseChart','incomeExpenseChart', () => ({
+                makeOrUpdateChart('incomeExpenseChart', 'incomeExpenseChart', () => ({
                     type: 'line',
                     data: {
                         labels: monthsShort,
-                        datasets: [
-                            { label: 'Income',   data: monthlyIncome,   borderColor: '#00E676', backgroundColor: 'rgba(0,230,118,0.15)', fill: true, tension: 0.3 },
-                            { label: 'Expenses', data: monthlyExpenses, borderColor: '#FF5252', backgroundColor: 'rgba(255,82,82,0.15)', fill: true, tension: 0.3 }
+                        datasets: [{
+                                label: 'Income',
+                                data: monthlyIncome,
+                                borderColor: '#00E676',
+                                backgroundColor: 'rgba(0,230,118,0.15)',
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Expenses',
+                                data: monthlyExpenses,
+                                borderColor: '#FF5252',
+                                backgroundColor: 'rgba(255,82,82,0.15)',
+                                fill: true,
+                                tension: 0.3
+                            }
                         ]
                     },
                     options: {
-                        scales: { x: safeXGrid, y: safeYScale },
-                        plugins: { legend: { position: 'bottom' } }
+                        scales: {
+                            x: safeXGrid,
+                            y: safeYScale
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
                     }
                 }));
 
@@ -1341,7 +1435,7 @@
                         window.__forecastLoaded = true;
                         $.get("{{ route('forecast.data') }}")
                             .done((data) => {
-                                makeOrUpdateChart('forecastChart','forecastChart', () => ({
+                                makeOrUpdateChart('forecastChart', 'forecastChart', () => ({
                                     type: 'line',
                                     data: {
                                         labels: data.months,
@@ -1355,8 +1449,16 @@
                                         }]
                                     },
                                     options: {
-                                        scales: { x: safeXGrid, y: safeYScale },
-                                        plugins: { legend: { display: true, position: 'top' } }
+                                        scales: {
+                                            x: safeXGrid,
+                                            y: safeYScale
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top'
+                                            }
+                                        }
                                     }
                                 }));
                             })
