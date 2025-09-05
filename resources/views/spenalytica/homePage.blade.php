@@ -521,10 +521,8 @@
             <!-- Expense Tab -->
             <div id="addExpense" class="tab-content">
                 <div class="card">
-                    <div class="card-header">
-                        Add Expenses
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3">Add Expenses</h4>
                         <form method="POST" action="{{ route('addExpense') }}">
                             @csrf
                             <div class="mb-2">
@@ -542,7 +540,7 @@
                             <div class="mb-2">
                                 <label class="form-label">Subscription:</label>
                                 <input type="radio" value="1" name="subscription"> Yes
-                                <input type="radio" value="0" name="subscription"> No
+                                <input type="radio" value="0" name="subscription" class="ms-2"> No
                             </div>
                             <div class="mb-2">
                                 <input type="number" name="cost" placeholder="Expense Cost" class="form-control"
@@ -556,16 +554,27 @@
                         </form>
                     </div>
                 </div>
+
+                {{-- All Added Expenses Table --}}
                 <div class="card mt-3">
-                    <div class="card-header">
-                        All Expenses Added
-                        <div class="mb-3">
-                            <label for="expenseMonthFilter">Filter Expenses by Month:</label>
-                            <input type="month" id="expenseMonthFilter" name="expenseMonthFilter"
-                                class="form-control">
-                        </div>
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3">All Added Expenses</h4>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <label for="expenseMonthFilter" class="form-label">Filter by Month</label>
+                                <input type="month" id="expenseMonthFilter" class="form-control"
+                                    placeholder="Show all">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="expenseYearFilter" class="form-label">Filter by Year</label>
+                                <select id="expenseYearFilter" class="form-select">
+                                    <option value="">Show all</option>
+                                    {{-- options populated by JS from table data --}}
+                                </select>
+                            </div>
+                        </div>
+
                         <table id="expenseTable" class="display">
                             <thead>
                                 <tr>
@@ -586,13 +595,7 @@
                                         e-description="{{ $expense->description }}">
                                         <td>{{ $expense->expense }}</td>
                                         <td>{{ $expense->category->category }}</td>
-                                        <td>
-                                            @if ($expense->subscription)
-                                                Yes
-                                            @else
-                                                No
-                                            @endif
-                                        </td>
+                                        <td>{{ $expense->subscription ? 'Yes' : 'No' }}</td>
                                         <td>{{ $expense->cost }}</td>
                                         <td>{{ $expense->created_at->format('Y-m-d') }}</td>
                                         <td>
@@ -603,38 +606,32 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="d-flex flex-row justify-content-around">
-                                                <div>
-                                                    <!-- edit Button trigger -->
-                                                    <button class="btn btn-primary editExpenseBtn" data-bs-toggle="modal"
-                                                        data-bs-target="#editExpenseModal">Edit</button>
-                                                </div>
-                                                <div>
-                                                    <!-- delete button -->
-                                                    <form action="{{ route('deleteExpense') }}" method="POST">
-                                                        @csrf
-                                                        <input type="hidden" value="{{ $expense->id }}"
-                                                            name="expenseId">
-                                                        <button type="submit" class="btn btn-danger">Delete</button>
-                                                    </form>
-                                                </div>
+                                            <div class="d-flex justify-content-around">
+                                                <button class="btn btn-primary editExpenseBtn" data-bs-toggle="modal"
+                                                    data-bs-target="#editExpenseModal">Edit</button>
+                                                <form action="{{ route('deleteExpense') }}" method="POST"
+                                                    class="ms-2">
+                                                    @csrf
+                                                    <input type="hidden" value="{{ $expense->id }}" name="expenseId">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
+
                     </div>
                 </div>
             </div>
 
             <!-- Income Tab -->
             <div id="addIncome" class="tab-content">
+                <!-- add expenses -->
                 <div class="card">
-                    <div class="card-header">
-                        Add Income
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3">Add Expenses</h4>
                         <form method="POST" action="{{ route('addIncome') }}">
                             @csrf
                             <div class="mb-2">
@@ -652,7 +649,7 @@
                             <div class="mb-2">
                                 <label class="form-label">Is it a Monthly Recurring Revenue (MRR):</label>
                                 <input type="radio" value="1" name="mrr"> Yes
-                                <input type="radio" value="0" name="mrr"> No
+                                <input type="radio" value="0" name="mrr" class="ms-2"> No
                             </div>
                             <div class="mb-2">
                                 <input type="number" name="revenue" placeholder="Revenue" class="form-control"
@@ -666,15 +663,25 @@
                         </form>
                     </div>
                 </div>
-                <div class="card mt-3">
-                    <div class="card-header">
-                        All Income Revenues Added
-                        <div class="mb-3">
-                            <label for="incomeMonthFilter">Filter Income by Month:</label>
-                            <input type="month" id="incomeMonthFilter" name="incomeMonthFilter" class="form-control">
-                        </div>
-                    </div>
+
+                <!-- All Added Income Table -->
+                <div class="card">
                     <div class="card-body">
+                        <h4 class="mb-3">All Added Income Table</h4>
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <label for="incomeMonthFilter" class="form-label">Filter by Month</label>
+                                <input type="month" id="incomeMonthFilter" class="form-control"
+                                    placeholder="Show all">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="incomeYearFilter" class="form-label">Filter by Year</label>
+                                <select id="incomeYearFilter" class="form-select">
+                                    <option value="">Show all</option>
+                                    {{-- options populated by JS from table data --}}
+                                </select>
+                            </div>
+                        </div>
                         <table id="incomeTable" class="display">
                             <thead>
                                 <tr>
@@ -704,27 +711,21 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="d-flex flex-row justify-content-around">
-                                                <div>
-                                                    <!-- edit Button trigger -->
-                                                    <button class="btn btn-primary editIncomeBtn"
-                                                        data-id="{{ $income->id }}" data-label="{{ $income->label }}"
-                                                        data-category="{{ $income->categoryId }}"
-                                                        data-mrr="{{ $income->mrr }}"
-                                                        data-revenue="{{ $income->revenue }}"
-                                                        data-description="{{ $income->description }}"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editIncomeModal">Edit</button>
-                                                </div>
-                                                <div>
-                                                    <!-- delete button -->
-                                                    <form action="{{ route('deleteIncome') }}" method="POST">
-                                                        @csrf
-                                                        <input type="hidden" value="{{ $income->id }}"
-                                                            name="incomeId">
-                                                        <button type="submit" class="btn btn-danger">Delete</button>
-                                                    </form>
-                                                </div>
+                                            <div class="d-flex justify-content-around">
+                                                <button class="btn btn-primary editIncomeBtn"
+                                                    data-id="{{ $income->id }}" data-label="{{ $income->label }}"
+                                                    data-category="{{ $income->categoryId }}"
+                                                    data-mrr="{{ $income->mrr }}" data-revenue="{{ $income->revenue }}"
+                                                    data-description="{{ $income->description }}" data-bs-toggle="modal"
+                                                    data-bs-target="#editIncomeModal">
+                                                    Edit
+                                                </button>
+                                                <form action="{{ route('deleteIncome') }}" method="POST"
+                                                    class="ms-2">
+                                                    @csrf
+                                                    <input type="hidden" value="{{ $income->id }}" name="incomeId">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -734,6 +735,7 @@
                     </div>
                 </div>
             </div>
+
 
             <!-- Budget Tab -->
             <div id="budget" class="tab-content">
@@ -763,6 +765,7 @@
                     </div>
                 </div>
 
+                <!-- Budget Overview -->
                 <div class="card mt-3">
                     <div class="card-header">
                         Budget Overview
@@ -1108,33 +1111,92 @@
             /* ===========================
                Month filter defaults
             ============================ */
-            const setCurrentMonthInput = (id) => {
-                const input = document.getElementById(id);
-                if (!input) return;
-                const now = new Date();
-                input.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-            };
-            setCurrentMonthInput('expenseMonthFilter');
-            setCurrentMonthInput('incomeMonthFilter');
+            // Populate Year <select> options by scanning table date column
+            function populateYearsFromTable(tableId, dateColIndex, selectId) {
+                const years = new Set();
+                const $rows = $(`#${tableId} tbody tr`);
+                $rows.each(function() {
+                    const txt = ($(this).find('td').eq(dateColIndex).text() || '').trim();
+                    // expect YYYY-MM-DD
+                    const y = txt.slice(0, 4);
+                    if (/^\d{4}$/.test(y)) years.add(y);
+                });
 
-            function filterByMonth(tableId, colIndex, monthValue) {
-                const year = monthValue.substring(0, 4);
-                const month = monthValue.substring(5, 7);
+                const sel = document.getElementById(selectId);
+                if (!sel) return;
+                const sorted = Array.from(years).sort((a, b) => b.localeCompare(a)); // desc
+                sel.innerHTML = '<option value="">Show all</option>' +
+                    sorted.map(y => `<option value="${y}">${y}</option>`).join('');
+            }
+
+            // Apply combined filters: month (takes precedence) or year; both blank => show all
+            function applyDateFilters(tableId, dateColIndex, monthValue, yearValue) {
                 if (!window.jQuery || !$.fn.dataTable) return;
+                const dt = $(`#${tableId}`).DataTable();
+
                 $.fn.dataTable.ext.search.push((settings, data) => {
                     if (settings.nTable.id !== tableId) return true;
-                    const d = new Date(data[colIndex]);
-                    return d.getFullYear() == year && (d.getMonth() + 1) == parseInt(month);
+
+                    const cell = data[dateColIndex];
+                    const d = new Date(cell);
+                    if (isNaN(d)) return false;
+
+                    if (monthValue) {
+                        const y = parseInt(monthValue.substring(0, 4), 10);
+                        const m = parseInt(monthValue.substring(5, 7), 10);
+                        return d.getFullYear() === y && (d.getMonth() + 1) === m;
+                    }
+                    if (yearValue) {
+                        return d.getFullYear() === parseInt(yearValue, 10);
+                    }
+                    return true; // show all
                 });
-                $(`#${tableId}`).DataTable().draw();
+
+                dt.draw();
                 $.fn.dataTable.ext.search.pop();
             }
-            document.getElementById('expenseMonthFilter')?.addEventListener('change', e =>
-                filterByMonth('expenseTable', 4, e.target.value)
-            );
-            document.getElementById('incomeMonthFilter')?.addEventListener('change', e =>
-                filterByMonth('incomeTable', 3, e.target.value)
-            );
+
+            // Hook up both filters for a table
+            function initMonthYearFilters({
+                tableId,
+                dateColIndex,
+                monthInputId,
+                yearSelectId
+            }) {
+                // Leave month blank (default "show all")
+                const monthEl = document.getElementById(monthInputId);
+                const yearEl = document.getElementById(yearSelectId);
+                if (monthEl) monthEl.value = '';
+                if (yearEl) yearEl.value = '';
+
+                // Populate year dropdown from table content
+                populateYearsFromTable(tableId, dateColIndex, yearSelectId);
+
+                const handler = () => {
+                    const monthVal = monthEl?.value || '';
+                    const yearVal = yearEl?.value || '';
+                    applyDateFilters(tableId, dateColIndex, monthVal, yearVal);
+                };
+
+                monthEl?.addEventListener('change', handler);
+                yearEl?.addEventListener('change', handler);
+            }
+
+            // Expenses: date column is index 4 ("Added at")
+            initMonthYearFilters({
+                tableId: 'expenseTable',
+                dateColIndex: 4,
+                monthInputId: 'expenseMonthFilter',
+                yearSelectId: 'expenseYearFilter',
+            });
+
+            // Income: date column is index 3 ("Added at")
+            initMonthYearFilters({
+                tableId: 'incomeTable',
+                dateColIndex: 3,
+                monthInputId: 'incomeMonthFilter',
+                yearSelectId: 'incomeYearFilter',
+            });
 
             /* ===========================
                Edit modals (Category/Expense/Income)
