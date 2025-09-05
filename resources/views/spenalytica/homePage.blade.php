@@ -740,10 +740,8 @@
             <!-- Budget Tab -->
             <div id="budget" class="tab-content">
                 <div class="card">
-                    <div class="card-header">
-                        Set Monthly Budgets
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3">Set Monthly Budgets</h4>
                         <form method="POST" action="{{ route('budgets.store') }}">
                             @csrf
                             <div class="row">
@@ -767,10 +765,8 @@
 
                 <!-- Budget Overview -->
                 <div class="card mt-3">
-                    <div class="card-header">
-                        Budget Overview
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3">Budget Overview</h4>
                         <div class="row">
                             @foreach ($categories as $category)
                                 @php
@@ -804,11 +800,8 @@
             <!-- Category Tab -->
             <div id="category" class="tab-content">
                 <div class="card">
-                    <div class="card-header">
-                        Add Category
-                    </div>
-
                     <div class="card-body">
+                        <h4 class="mb-3">Add Category</h4>
                         <form method="POST" action="{{ route('addCategory') }}">
                             @csrf
                             <div class="mb-2">
@@ -824,10 +817,8 @@
                     </div>
                 </div>
                 <div class="card mt-2">
-                    <div class="card-header">
-                        All Categories added
-                    </div>
                     <div class="card-body">
+                        <h4 class="mb-3"> All Categories Added</h4>
                         <table id="categoryTable" class="display">
                             <thead>
                                 <tr>
