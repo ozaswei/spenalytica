@@ -6,9 +6,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\BudgetController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return view('spenalytica.frontPage');
+    if(Auth::id()){
+        return redirect()->route('homePage');
+    }else{
+return view('spenalytica.frontPage');
+    }
 });
 
 Route::get('/dashboard', function () {
